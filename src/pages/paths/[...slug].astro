@@ -1,0 +1,550 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { authorToUsername } from '../../data/users';
+
+export async function getStaticPaths() {
+  const paths = await getCollection('paths');
+  return paths.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const allPaths = await getCollection('paths');
+
+// Related paths: share at least one tool or same difficulty
+const relatedPaths = allPaths
+  .filter((p) => p.id !== entry.id)
+  .map((p) => {
+    const sharedTools = p.data.tools.filter((t: string) => entry.data.tools.includes(t));
+    const sameDifficulty = p.data.difficulty === entry.data.difficulty ? 1 : 0;
+    return { path: p, score: sharedTools.length * 2 + sameDifficulty };
+  })
+  .filter((r) => r.score > 0)
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3)
+  .map((r) => r.path);
+
+const difficultyLabel: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+};
+
+const username = authorToUsername[entry.data.author];
+const rawUrl = `/raw/${entry.id}`;
+const pathUrl = `/paths/${entry.id}`;
+
+// Build flow diagram from tools
+const toolFlow = entry.data.tools;
+---
+
+<BaseLayout title={entry.data.title} description={entry.data['ai-summary']}>
+  <div class="max-w-3xl mx-auto px-6 py-12">
+    <!-- Header -->
+    <header class="mb-8 pb-6 border-b border-border-primary">
+      <div class="flex items-start justify-between gap-4">
+        <h1 class="text-2xl font-bold text-white leading-tight">{entry.data.title}</h1>
+        <button
+          id="bookmark-btn"
+          class="bookmark-btn btn btn-ghost btn-sm shrink-0"
+          data-slug={entry.id}
+          data-title={entry.data.title}
+          title="Bookmark this path"
+        >
+          <svg id="bookmark-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 2h10v13l-5-3.5L3 15V2z"/>
+          </svg>
+          <span id="bookmark-text" class="text-xs">Bookmark</span>
+        </button>
+      </div>
+      <p class="text-text-secondary mt-2">{entry.data.goal}</p>
+
+      <div class="flex flex-wrap items-center gap-3 mt-4 text-sm text-text-muted">
+        {username ? (
+          <a href={`/user/${username}`} class="hover:text-white transition-colors">{entry.data.author}</a>
+        ) : (
+          <span>{entry.data.author}</span>
+        )}
+        <span>·</span>
+        <span>{entry.data.updated}</span>
+        <span>·</span>
+        <span class="tag">{difficultyLabel[entry.data.difficulty]}</span>
+        <span class="tag">{entry.data['result-quality']}</span>
+        <span>·</span>
+        <span>{entry.data['time-actual']}</span>
+      </div>
+
+      <!-- Tool flow diagram -->
+      <div class="mt-5 p-4 border border-border-primary bg-bg-secondary">
+        <div class="text-xs text-text-muted uppercase tracking-wider mb-3">Pipeline</div>
+        <div class="flex flex-wrap items-center gap-1">
+          {toolFlow.map((tool: string, i: number) => (
+            <>
+              <a href={`/explore?tool=${encodeURIComponent(tool)}`} class="flow-node hover:border-border-active hover:text-white transition-all">
+                {tool}
+              </a>
+              {i < toolFlow.length - 1 && (
+                <span class="flow-arrow">→</span>
+              )}
+            </>
+          ))}
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="flex flex-wrap items-center gap-2 mt-4">
+        <a href={rawUrl} class="btn btn-sm" target="_blank">
+          View raw .path.md
+        </a>
+        <button id="copy-link-btn" class="btn btn-sm" data-url={pathUrl}>
+          Copy link
+        </button>
+        <button id="copy-raw-btn" class="btn btn-sm" data-url={rawUrl}>
+          Copy raw URL
+        </button>
+        <button id="copy-citation-btn" class="btn btn-sm" data-title={entry.data.title} data-url={pathUrl} data-author={entry.data.author}>
+          Copy AI citation
+        </button>
+        <button id="ask-ai-btn" class="btn btn-sm btn-primary" data-title={entry.data.title} data-summary={entry.data['ai-summary']} data-url={pathUrl} data-author={entry.data.author} data-tools={entry.data.tools.join(', ')}>
+          Ask AI about this path
+        </button>
+      </div>
+    </header>
+
+    <!-- AI Summary callout -->
+    <div class="border border-border-primary bg-bg-secondary p-4 mb-8">
+      <div class="text-xs text-text-muted uppercase tracking-wider mb-2">AI Summary</div>
+      <p class="text-text-secondary text-sm">{entry.data['ai-summary']}</p>
+    </div>
+
+    <!-- Content -->
+    <article class="prose" id="path-content">
+      <Content />
+    </article>
+
+    <!-- Upvote + Actions bar -->
+    <div class="flex items-center gap-4 border border-border-primary bg-bg-secondary p-4 mt-12">
+      <button id="upvote-btn" class="flex items-center gap-2 btn btn-sm" data-slug={entry.id}>
+        <svg id="upvote-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3L3 10h10L8 3z"/>
+        </svg>
+        <span id="upvote-count" class="text-xs">0</span>
+        <span class="text-xs text-text-muted">upvotes</span>
+      </button>
+      <div class="h-4 w-px bg-border-primary"></div>
+      <button id="fork-btn" class="btn btn-sm" data-slug={entry.id} data-title={entry.data.title}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="4" cy="4" r="1.5"/><circle cx="12" cy="4" r="1.5"/><circle cx="8" cy="13" r="1.5"/>
+          <path d="M4 5.5v1.5c0 1 .9 2 2 2h4c1.1 0 2-1 2-2V5.5"/><path d="M8 9v2.5"/>
+        </svg>
+        Fork path
+      </button>
+      <div class="h-4 w-px bg-border-primary"></div>
+      <span id="built-count" class="text-xs text-text-muted">0 people built this</span>
+    </div>
+
+    <!-- I Built This -->
+    <div class="mt-6" id="built-section">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider">I built this</h2>
+      </div>
+
+      <div id="built-form-wrapper" class="mb-4">
+        <div id="built-login-prompt" class="border border-border-primary bg-bg-secondary p-4 text-center">
+          <p class="text-text-muted text-sm"><a href="/login" class="text-white underline underline-offset-2">Log in</a> to share your result</p>
+        </div>
+        <div id="built-form" class="hidden">
+          <div class="border border-border-primary bg-bg-secondary p-4">
+            <div class="text-xs text-text-muted uppercase tracking-wider mb-3">Share your result</div>
+            <textarea id="built-input" class="input mb-2" placeholder="What did you build? How did it turn out? What would you change?"></textarea>
+            <div class="flex items-center justify-between">
+              <span class="text-[0.65rem] text-text-muted">Tip: mention tools you swapped, time it took you, and client reaction</span>
+              <button id="submit-built" class="btn btn-sm btn-primary">Post result</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="built-list"></div>
+      <div id="no-built" class="border border-border-primary bg-bg-secondary p-6 text-center">
+        <p class="text-text-muted text-sm">No one has shared their result yet. Be the first.</p>
+      </div>
+    </div>
+
+    <!-- Related Paths -->
+    {relatedPaths.length > 0 && (
+      <div class="mt-10">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Related paths</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {relatedPaths.map((rp) => {
+            const sharedTools = rp.data.tools.filter((t: string) => entry.data.tools.includes(t));
+            return (
+              <a href={`/paths/${rp.id}`} class="block border border-border-primary bg-bg-secondary p-4 hover:border-border-secondary transition-all">
+                <h3 class="text-white font-semibold text-xs">{rp.data.title}</h3>
+                <p class="text-text-muted text-[0.65rem] mt-1 line-clamp-2">{rp.data.goal}</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  {sharedTools.map((t: string) => (
+                    <span class="text-[0.6rem] text-text-muted bg-bg-primary px-1 py-0.5 border border-border-active">{t}</span>
+                  ))}
+                </div>
+                <div class="text-[0.65rem] text-text-muted mt-2">
+                  {rp.data.author} · {difficultyLabel[rp.data.difficulty]}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    <!-- Comments / Notes -->
+    <div class="mt-10" id="comments-section">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider">Community notes</h2>
+        <span id="comment-count" class="text-xs text-text-muted">0 notes</span>
+      </div>
+
+      <!-- Add comment form (shown when logged in) -->
+      <div id="comment-form-wrapper" class="mb-4">
+        <div id="comment-login-prompt" class="border border-border-primary bg-bg-secondary p-4 text-center">
+          <p class="text-text-muted text-sm"><a href="/login" class="text-white underline underline-offset-2">Log in</a> to leave a note</p>
+        </div>
+        <div id="comment-form" class="hidden">
+          <textarea id="comment-input" class="input" placeholder="Share a tip, alternative approach, or result from trying this path..."></textarea>
+          <div class="flex justify-end mt-2">
+            <button id="submit-comment" class="btn btn-sm btn-primary">Post note</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments list -->
+      <div id="comments-list"></div>
+
+      <div id="no-comments" class="border border-border-primary bg-bg-secondary p-8 text-center">
+        <p class="text-text-muted text-sm">No community notes yet. Be the first to share your experience with this path.</p>
+      </div>
+    </div>
+
+    <!-- Bottom actions -->
+    <div class="border-t border-border-primary mt-10 pt-6 flex items-center justify-between">
+      <a href="/explore" class="btn btn-sm">← All paths</a>
+      <div class="flex gap-2">
+        <button id="download-btn" class="btn btn-sm" data-slug={entry.id}>
+          Download .path.md
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script is:inline>
+    // ── Toast ──
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    function copyToClipboard(text, msg) {
+      navigator.clipboard.writeText(text).then(() => showToast(msg));
+    }
+
+    // ── Copy buttons ──
+    document.getElementById('copy-link-btn')?.addEventListener('click', function() {
+      copyToClipboard(window.location.origin + this.dataset.url, 'Link copied');
+    });
+
+    document.getElementById('copy-raw-btn')?.addEventListener('click', function() {
+      copyToClipboard(window.location.origin + this.dataset.url, 'Raw URL copied');
+    });
+
+    document.getElementById('copy-citation-btn')?.addEventListener('click', function() {
+      const citation = `Source: "${this.dataset.title}" by ${this.dataset.author}\nURL: ${window.location.origin}${this.dataset.url}\nRegistry: arch·kb (arch-kb.com)`;
+      copyToClipboard(citation, 'AI citation copied');
+    });
+
+    // ── Ask AI ──
+    document.getElementById('ask-ai-btn')?.addEventListener('click', function() {
+      const d = this.dataset;
+      const prompt = `I want to replicate this architecture + AI workflow:\n\nTitle: ${d.title}\nSummary: ${d.summary}\nTools used: ${d.tools}\nFull path: ${window.location.origin}${d.url}\nRaw markdown (feed this to your context): ${window.location.origin}/raw/${window.location.pathname.split('/').pop()}\n\nPlease read the raw markdown at that URL and guide me through the workflow step by step. Adapt it to my specific situation — ask me what I already have before starting.`;
+      copyToClipboard(prompt, 'AI prompt copied — paste it into Claude or ChatGPT');
+    });
+
+    // ── Download ──
+    document.getElementById('download-btn')?.addEventListener('click', async function() {
+      const slug = this.dataset.slug;
+      const res = await fetch('/raw/' + slug);
+      const text = await res.text();
+      const blob = new Blob([text], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = slug + '.path.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Downloaded ' + slug + '.path.md');
+    });
+
+    // ── Copy buttons on code blocks ──
+    document.querySelectorAll('.prose pre').forEach(pre => {
+      const btn = document.createElement('button');
+      btn.className = 'copy-code-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', () => {
+        const code = pre.querySelector('code')?.textContent || pre.textContent;
+        copyToClipboard(code, 'Code copied');
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+      pre.style.position = 'relative';
+      pre.appendChild(btn);
+    });
+
+    // ── Bookmarks ──
+    const bookmarkBtn = document.getElementById('bookmark-btn');
+    const bookmarkIcon = document.getElementById('bookmark-icon');
+    const bookmarkText = document.getElementById('bookmark-text');
+
+    function getBookmarks() {
+      return JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]');
+    }
+
+    function updateBookmarkUI() {
+      const slug = bookmarkBtn.dataset.slug;
+      const bookmarks = getBookmarks();
+      const isBookmarked = bookmarks.some(b => b.slug === slug);
+      if (isBookmarked) {
+        bookmarkBtn.classList.add('bookmarked');
+        bookmarkIcon.setAttribute('fill', 'currentColor');
+        bookmarkText.textContent = 'Bookmarked';
+      } else {
+        bookmarkBtn.classList.remove('bookmarked');
+        bookmarkIcon.setAttribute('fill', 'none');
+        bookmarkText.textContent = 'Bookmark';
+      }
+    }
+
+    bookmarkBtn?.addEventListener('click', () => {
+      const slug = bookmarkBtn.dataset.slug;
+      const title = bookmarkBtn.dataset.title;
+      let bookmarks = getBookmarks();
+      const idx = bookmarks.findIndex(b => b.slug === slug);
+      if (idx >= 0) {
+        bookmarks.splice(idx, 1);
+        showToast('Bookmark removed');
+      } else {
+        bookmarks.push({ slug, title, date: new Date().toISOString() });
+        showToast('Path bookmarked');
+      }
+      localStorage.setItem('archkb_bookmarks', JSON.stringify(bookmarks));
+      updateBookmarkUI();
+    });
+
+    updateBookmarkUI();
+
+    // ── Fork ──
+    document.getElementById('fork-btn')?.addEventListener('click', function() {
+      const user = localStorage.getItem('archkb_user');
+      if (!user) {
+        window.location.href = '/login';
+        return;
+      }
+      const slug = this.dataset.slug;
+      const title = this.dataset.title;
+      const forkPrompt = `I want to fork this arch·kb path:\n\nOriginal: "${title}"\nURL: ${window.location.href}\n\nMy variation:\n- What I changed: [describe your different approach]\n- Tools swapped: [old tool] → [new tool]\n- Why: [reason for the change]\n\nPlease help me write a .path.md file for my forked version, keeping the same structure but reflecting my changes. Reference the original path as "Forked from: ${title}"`;
+      copyToClipboard(forkPrompt, 'Fork prompt copied — paste into Claude to write your version');
+    });
+
+    // ── Comments ──
+    const slug = window.location.pathname.split('/').pop();
+    const commentsKey = 'archkb_comments_' + slug;
+
+    function getComments() {
+      return JSON.parse(localStorage.getItem(commentsKey) || '[]');
+    }
+
+    function renderComments() {
+      const comments = getComments();
+      const list = document.getElementById('comments-list');
+      const noComments = document.getElementById('no-comments');
+      const countEl = document.getElementById('comment-count');
+
+      countEl.textContent = comments.length + ' note' + (comments.length !== 1 ? 's' : '');
+
+      if (comments.length === 0) {
+        list.innerHTML = '';
+        noComments.classList.remove('hidden');
+        return;
+      }
+
+      noComments.classList.add('hidden');
+      list.innerHTML = comments.map((c, i) => `
+        <div class="comment">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-white text-xs font-semibold">${c.author}</span>
+              <span class="text-text-muted text-[0.65rem]">${new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+            <button class="delete-comment btn-ghost text-text-muted text-[0.65rem] px-1 hover:text-white" data-index="${i}" title="Delete">×</button>
+          </div>
+          <p class="text-text-secondary text-sm">${c.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+        </div>
+      `).join('');
+
+      // Bind delete buttons
+      list.querySelectorAll('.delete-comment').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          const comments = getComments();
+          comments.splice(idx, 1);
+          localStorage.setItem(commentsKey, JSON.stringify(comments));
+          renderComments();
+        });
+      });
+    }
+
+    // Show form if logged in
+    const user = localStorage.getItem('archkb_user');
+    if (user) {
+      document.getElementById('comment-login-prompt').classList.add('hidden');
+      document.getElementById('comment-form').classList.remove('hidden');
+    }
+
+    document.getElementById('submit-comment')?.addEventListener('click', () => {
+      const input = document.getElementById('comment-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const userData = JSON.parse(localStorage.getItem('archkb_user'));
+      const comments = getComments();
+      comments.push({
+        author: userData.displayName,
+        text,
+        date: new Date().toISOString(),
+      });
+      localStorage.setItem(commentsKey, JSON.stringify(comments));
+      input.value = '';
+      renderComments();
+      showToast('Note posted');
+    });
+
+    renderComments();
+
+    // ── Upvotes ──
+    const upvoteBtn = document.getElementById('upvote-btn');
+    const upvoteIcon = document.getElementById('upvote-icon');
+    const upvoteCount = document.getElementById('upvote-count');
+    const upvotesKey = 'archkb_upvotes';
+
+    function getUpvotes() {
+      return JSON.parse(localStorage.getItem(upvotesKey) || '{}');
+    }
+
+    function updateUpvoteUI() {
+      const upvotes = getUpvotes();
+      const count = upvotes[slug] || 0;
+      const voted = (JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]')).includes(slug);
+      upvoteCount.textContent = count;
+      if (voted) {
+        upvoteIcon.setAttribute('fill', 'currentColor');
+        upvoteBtn.classList.add('text-white');
+      }
+    }
+
+    upvoteBtn?.addEventListener('click', () => {
+      const userUpvotes = JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]');
+      const upvotes = getUpvotes();
+      const idx = userUpvotes.indexOf(slug);
+      if (idx >= 0) {
+        userUpvotes.splice(idx, 1);
+        upvotes[slug] = Math.max(0, (upvotes[slug] || 0) - 1);
+        showToast('Upvote removed');
+      } else {
+        userUpvotes.push(slug);
+        upvotes[slug] = (upvotes[slug] || 0) + 1;
+        showToast('Upvoted');
+      }
+      localStorage.setItem('archkb_user_upvotes', JSON.stringify(userUpvotes));
+      localStorage.setItem(upvotesKey, JSON.stringify(upvotes));
+      upvoteIcon.setAttribute('fill', userUpvotes.includes(slug) ? 'currentColor' : 'none');
+      upvoteBtn.classList.toggle('text-white', userUpvotes.includes(slug));
+      upvoteCount.textContent = upvotes[slug] || 0;
+    });
+
+    updateUpvoteUI();
+
+    // ── I Built This ──
+    const builtKey = 'archkb_built_' + slug;
+
+    function getBuilt() {
+      return JSON.parse(localStorage.getItem(builtKey) || '[]');
+    }
+
+    function renderBuilt() {
+      const items = getBuilt();
+      const list = document.getElementById('built-list');
+      const noBuilt = document.getElementById('no-built');
+      const countEl = document.getElementById('built-count');
+
+      countEl.textContent = items.length + ' people built this';
+
+      if (items.length === 0) {
+        list.innerHTML = '';
+        noBuilt.classList.remove('hidden');
+        return;
+      }
+
+      noBuilt.classList.add('hidden');
+      list.innerHTML = items.map((b, i) => `
+        <div class="comment">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-white text-xs font-semibold">${b.author}</span>
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-primary text-text-muted">built this</span>
+              <span class="text-text-muted text-[0.65rem]">${new Date(b.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+            <button class="delete-built btn-ghost text-text-muted text-[0.65rem] px-1 hover:text-white" data-index="${i}" title="Delete">×</button>
+          </div>
+          <p class="text-text-secondary text-sm">${b.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.delete-built').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const items = getBuilt();
+          items.splice(parseInt(btn.dataset.index), 1);
+          localStorage.setItem(builtKey, JSON.stringify(items));
+          renderBuilt();
+        });
+      });
+    }
+
+    // Show built form if logged in
+    if (user) {
+      document.getElementById('built-login-prompt')?.classList.add('hidden');
+      document.getElementById('built-form')?.classList.remove('hidden');
+    }
+
+    document.getElementById('submit-built')?.addEventListener('click', () => {
+      const input = document.getElementById('built-input');
+      const text = input.value.trim();
+      if (!text) return;
+      const userData = JSON.parse(localStorage.getItem('archkb_user'));
+      const items = getBuilt();
+      items.push({ author: userData.displayName, text, date: new Date().toISOString() });
+      localStorage.setItem(builtKey, JSON.stringify(items));
+      input.value = '';
+      renderBuilt();
+      showToast('Result posted');
+    });
+
+    renderBuilt();
+  </script>
+</BaseLayout>

@@ -1,0 +1,81 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'AI Path Registry for Architecture' } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — arch·kb</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col">
+    <nav class="border-b border-border-primary px-8 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-6">
+          <a href="/" class="text-white font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
+            arch·kb
+          </a>
+          <div class="flex items-center gap-0.5">
+            <a href="/explore" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Explore</a>
+            <a href="/prompts" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Prompts</a>
+            <a href="/learn" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Learn</a>
+            <a href="/templates" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Templates</a>
+            <a href="/contributors" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Contributors</a>
+            <a href="/this-week" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">This Week</a>
+          </div>
+        </div>
+        <div id="auth-nav" class="flex items-center gap-3">
+          <a href="/login" class="btn btn-sm" id="login-btn">Log in</a>
+          <a href="/register" class="btn btn-sm btn-primary" id="register-btn">Sign up</a>
+          <div id="user-menu" class="hidden flex items-center gap-3">
+            <a href="#" id="user-profile-link" class="text-sm text-text-secondary hover:text-white transition-colors"></a>
+            <button id="logout-btn" class="btn btn-sm">Log out</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="border-t border-border-primary text-text-muted text-xs text-center py-6">
+      arch·kb — AI Path Registry for Architecture
+    </footer>
+
+    <script is:inline>
+      function checkAuth() {
+        const user = localStorage.getItem('archkb_user');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const userMenu = document.getElementById('user-menu');
+        const profileLink = document.getElementById('user-profile-link');
+        if (user) {
+          const parsed = JSON.parse(user);
+          loginBtn.classList.add('hidden');
+          registerBtn.classList.add('hidden');
+          userMenu.classList.remove('hidden');
+          userMenu.classList.add('flex');
+          profileLink.textContent = parsed.displayName;
+          profileLink.href = '/user/' + parsed.username;
+        }
+      }
+      document.getElementById('logout-btn')?.addEventListener('click', () => {
+        localStorage.removeItem('archkb_user');
+        window.location.href = '/';
+      });
+      checkAuth();
+    </script>
+  </body>
+</html>

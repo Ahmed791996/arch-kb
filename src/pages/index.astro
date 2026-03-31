@@ -1,0 +1,180 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authorToUsername } from '../data/users';
+
+const paths = await getCollection('paths');
+const featured = paths.slice(0, 3);
+const tools = [...new Set(paths.flatMap((p) => p.data.tools))].sort();
+
+const difficultyLabel: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+};
+---
+
+<BaseLayout title="Home">
+  <!-- Hero -->
+  <section class="border-b border-border-primary px-6 py-20">
+    <div class="w-full px-2">
+      <div class="max-w-2xl">
+        <h1 class="text-4xl font-bold text-white leading-tight tracking-tight">
+          The path registry for<br/>AI + architecture
+        </h1>
+        <p class="text-text-secondary text-lg mt-4 leading-relaxed">
+          Real workflows from practicing architects. Structured for humans to read and AI agents to replicate. No tutorials. No fluff. Just the exact path someone took.
+        </p>
+        <div class="flex gap-3 mt-8">
+          <a href="/explore" class="btn btn-primary">Explore paths</a>
+          <a href="/register" class="btn">Contribute</a>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="flex gap-12 mt-14 pt-8 border-t border-border-primary">
+        <div>
+          <div class="text-2xl font-bold text-white">{paths.length}</div>
+          <div class="text-xs text-text-muted mt-1 uppercase tracking-wider">Published paths</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-white">{tools.length}</div>
+          <div class="text-xs text-text-muted mt-1 uppercase tracking-wider">Tools indexed</div>
+        </div>
+        <div>
+          <div class="text-2xl font-bold text-white">4</div>
+          <div class="text-xs text-text-muted mt-1 uppercase tracking-wider">Contributors</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="border-b border-border-primary px-6 py-16">
+    <div class="w-full px-2">
+      <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-8">How it works</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="border border-border-primary p-6 bg-bg-secondary">
+          <div class="text-white font-mono text-sm mb-3">01</div>
+          <h3 class="text-white font-semibold mb-2">Finish a project</h3>
+          <p class="text-text-secondary text-sm">Complete a real architecture + AI workflow. Gaussian splatting, AI rendering, automated pipelines — any tool, any scale.</p>
+        </div>
+        <div class="border border-border-primary p-6 bg-bg-secondary">
+          <div class="text-white font-mono text-sm mb-3">02</div>
+          <h3 class="text-white font-semibold mb-2">Write a .path.md</h3>
+          <p class="text-text-secondary text-sm">Document the exact sequence. What worked, what failed, which prompts, which tools. Include instructions for AI agents.</p>
+        </div>
+        <div class="border border-border-primary p-6 bg-bg-secondary">
+          <div class="text-white font-mono text-sm mb-3">03</div>
+          <h3 class="text-white font-semibold mb-2">Publish it</h3>
+          <p class="text-text-secondary text-sm">Your path becomes instantly readable by humans and AI agents. When someone asks Claude how to do it, your path is the answer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Paths -->
+  <section class="border-b border-border-primary px-6 py-16">
+    <div class="w-full px-2">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider">Featured paths</h2>
+        <a href="/explore" class="text-xs text-text-muted hover:text-white transition-colors">View all →</a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {featured.map((entry) => (
+          <a
+            href={`/paths/${entry.id}`}
+            class="block border border-border-primary p-5 bg-bg-secondary hover:border-border-secondary transition-all group"
+          >
+            <div class="flex items-center gap-2 mb-3">
+              <span class="tag">{difficultyLabel[entry.data.difficulty]}</span>
+              <span class="tag">{entry.data['time-actual']}</span>
+            </div>
+            <h3 class="text-white font-semibold text-sm group-hover:opacity-80 transition-opacity">{entry.data.title}</h3>
+            <p class="text-text-muted text-xs mt-2 line-clamp-2">{entry.data.goal}</p>
+            <div class="flex flex-wrap gap-1 mt-3">
+              {entry.data.tools.slice(0, 3).map((tool: string) => (
+                <span class="text-[0.65rem] text-text-muted bg-bg-primary px-1.5 py-0.5 border border-border-primary">{tool}</span>
+              ))}
+              {entry.data.tools.length > 3 && (
+                <span class="text-[0.65rem] text-text-muted">+{entry.data.tools.length - 3}</span>
+              )}
+            </div>
+            <div class="text-xs text-text-muted mt-4 pt-3 border-t border-border-primary">
+              <a href={`/user/${authorToUsername[entry.data.author] || '#'}`} class="hover:text-white">{entry.data.author}</a>
+              <span class="mx-1">·</span>
+              <span>{entry.data.updated}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Monthly Challenge -->
+  <section class="border-b border-border-primary px-6 py-16">
+    <div class="w-full px-2">
+      <div class="border border-border-primary bg-bg-secondary p-8">
+        <div class="flex items-start justify-between gap-6">
+          <div>
+            <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Monthly challenge — March 2025</div>
+            <h2 class="text-white font-semibold text-lg">Document your best ControlNet workflow</h2>
+            <p class="text-text-secondary text-sm mt-2 max-w-xl">
+              Share a path showing how you use ControlNet (depth, canny, lineart) in your architecture workflow. Best submission gets featured on the homepage.
+            </p>
+            <div class="flex gap-3 mt-4">
+              <a href="/templates" class="btn btn-sm btn-primary">Start from a template</a>
+              <a href="/explore?tool=ControlNet" class="btn btn-sm">See existing paths</a>
+            </div>
+          </div>
+          <div class="text-right shrink-0 hidden md:block">
+            <div class="text-3xl font-bold text-white">6</div>
+            <div class="text-xs text-text-muted">submissions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick links -->
+  <section class="border-b border-border-primary px-6 py-16">
+    <div class="w-full px-2">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/prompts" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
+          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Prompt library</h3>
+          <p class="text-text-muted text-xs mt-1">Every working prompt from every path. Searchable by tool and use case.</p>
+        </a>
+        <a href="/learn" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
+          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Learning paths</h3>
+          <p class="text-text-muted text-xs mt-1">Structured progression from beginner to advanced. Three curated tracks.</p>
+        </a>
+        <a href="/templates" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
+          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Path templates</h3>
+          <p class="text-text-muted text-xs mt-1">Blank .path.md templates for common workflow types. Download and fill in.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- For AI Agents -->
+  <section class="px-6 py-16">
+    <div class="w-full px-2">
+      <div class="border border-border-primary bg-bg-secondary p-8">
+        <div class="flex items-start gap-4">
+          <div class="text-white font-mono text-2xl mt-0.5">⌘</div>
+          <div>
+            <h2 class="text-white font-semibold text-lg">Built for AI agents</h2>
+            <p class="text-text-secondary text-sm mt-2 max-w-xl">
+              Every path is simultaneously readable as a rendered page, raw markdown, and indexed in llms.txt. AI agents can find, read, and replicate any published workflow.
+            </p>
+            <div class="flex gap-3 mt-4">
+              <a href="/llms.txt" class="btn btn-sm">llms.txt</a>
+              <a href="/raw/gaussian-relight" class="btn btn-sm">Example raw path</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

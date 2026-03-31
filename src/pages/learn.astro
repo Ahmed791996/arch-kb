@@ -1,0 +1,111 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authorToUsername } from '../data/users';
+
+const allPaths = await getCollection('paths');
+
+const difficultyLabel: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+};
+
+const difficultyOrder = ['beginner', 'intermediate', 'advanced'];
+
+// Learning tracks
+const tracks = [
+  {
+    id: 'ai-rendering',
+    name: 'AI Rendering for Architecture',
+    description: 'From first AI render to production-quality batch pipelines. Start with simple model-to-render workflows and progress to automated batch generation.',
+    pathSlugs: ['stable-diffusion-interiors', 'rhino-controlnet', 'comfyui-arch-render'],
+  },
+  {
+    id: 'capture-and-reconstruct',
+    name: 'Capture & Reconstruct',
+    description: 'Learn to capture real-world buildings and sites as 3D models. Start with gaussian splatting, progress to NeRF, and learn to relight your captures.',
+    pathSlugs: ['gaussian-relight', 'nerf-site-capture'],
+  },
+  {
+    id: 'ai-design-tools',
+    name: 'AI in the Design Process',
+    description: 'Integrate AI directly into your design workflow. Convert sketches to plans, generate variations, and speed up schematic design.',
+    pathSlugs: ['revit-ai-floorplan', 'rhino-controlnet', 'comfyui-arch-render'],
+  },
+];
+
+// Resolve paths for each track
+const resolvedTracks = tracks.map(track => ({
+  ...track,
+  paths: track.pathSlugs
+    .map(slug => allPaths.find(p => p.id === slug))
+    .filter(Boolean),
+}));
+---
+
+<BaseLayout title="Learn">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-4xl">
+      <h1 class="text-2xl font-bold text-white mb-2">Learning paths</h1>
+      <p class="text-text-muted text-sm mb-2">Structured progression from beginner to advanced. Each track chains paths in the right order.</p>
+      <p class="text-text-muted text-xs mb-10">Start at the top, work your way down. Each path builds on skills from the previous one.</p>
+
+      {resolvedTracks.map((track) => (
+        <div class="mb-14">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-white">{track.name}</h2>
+            <p class="text-text-muted text-sm mt-1">{track.description}</p>
+            <div class="flex items-center gap-2 mt-2 text-xs text-text-muted">
+              <span>{track.paths.length} paths</span>
+              <span>·</span>
+              <span>{track.paths[0]?.data.difficulty} → {track.paths[track.paths.length - 1]?.data.difficulty}</span>
+            </div>
+          </div>
+
+          <div class="relative">
+            <!-- Vertical line -->
+            <div class="absolute left-5 top-0 bottom-0 w-px bg-border-secondary"></div>
+
+            <div class="flex flex-col gap-4">
+              {track.paths.map((entry, i) => (
+                <div class="relative pl-14">
+                  <!-- Step circle -->
+                  <div class="absolute left-2.5 top-4 w-5 h-5 border-2 border-border-secondary bg-bg-primary flex items-center justify-center">
+                    <span class="text-[0.6rem] text-text-muted font-mono">{i + 1}</span>
+                  </div>
+
+                  <a href={`/paths/${entry.id}`} class="block border border-border-primary bg-bg-secondary p-5 hover:border-border-secondary transition-all">
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="tag text-[0.65rem]">{difficultyLabel[entry.data.difficulty]}</span>
+                          <span class="tag text-[0.65rem]">{entry.data['time-actual']}</span>
+                        </div>
+                        <h3 class="text-white font-semibold text-sm">{entry.data.title}</h3>
+                        <p class="text-text-muted text-xs mt-1">{entry.data.goal}</p>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                          {entry.data.tools.map((tool: string) => (
+                            <span class="text-[0.6rem] text-text-muted bg-bg-primary px-1.5 py-0.5 border border-border-primary">{tool}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div class="text-text-muted text-xs shrink-0">
+                        {entry.data.author}
+                      </div>
+                    </div>
+                    {i < track.paths.length - 1 && (
+                      <div class="mt-3 pt-2 border-t border-border-primary text-xs text-text-muted italic">
+                        Skills you'll gain: {entry.data.tools.slice(0, 2).join(', ')} workflow fundamentals
+                      </div>
+                    )}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,208 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const allPaths = await getCollection('paths');
+
+// Extract prompts from all paths (curated data since we can't parse markdown blocks at build time)
+const prompts = [
+  {
+    text: 'atmosphere only — [mood descriptor] light, no physical description, no objects, no environment, only light quality and emotional temperature',
+    tool: 'Fal.ai',
+    use: 'Relighting',
+    path: 'gaussian-relight',
+    pathTitle: 'Gaussian splat → Fal.ai relight → Photoshop composite',
+    author: 'Ahmed Yakout',
+    tip: 'Never describe the building — mood language only. Describing geometry causes hallucinations.',
+  },
+  {
+    text: 'atmosphere only — golden hour warmth, long horizontal shadows, dust in air',
+    tool: 'Fal.ai',
+    use: 'Relighting',
+    path: 'gaussian-relight',
+    pathTitle: 'Gaussian splat → Fal.ai relight → Photoshop composite',
+    author: 'Ahmed Yakout',
+    tip: 'Light direction + emotional temperature + atmospheric quality.',
+  },
+  {
+    text: 'atmosphere only — overcast northern light, flat diffuse, cool grey tone',
+    tool: 'Fal.ai',
+    use: 'Relighting',
+    path: 'gaussian-relight',
+    pathTitle: 'Gaussian splat → Fal.ai relight → Photoshop composite',
+    author: 'Ahmed Yakout',
+    tip: null,
+  },
+  {
+    text: 'atmosphere only — deep blue twilight, artificial warmth from interior windows',
+    tool: 'Fal.ai',
+    use: 'Relighting',
+    path: 'gaussian-relight',
+    pathTitle: 'Gaussian splat → Fal.ai relight → Photoshop composite',
+    author: 'Ahmed Yakout',
+    tip: null,
+  },
+  {
+    text: 'architectural photograph, [material] facade, [context] setting, [time of day] lighting, 35mm lens, high detail',
+    tool: 'Flux + ControlNet',
+    use: 'Exterior render',
+    path: 'rhino-controlnet',
+    pathTitle: 'Rhino viewport → ControlNet → AI architectural render',
+    author: 'Sarah Chen',
+    tip: 'Avoid "beautiful", "stunning", "award-winning" — these trigger generic outputs.',
+  },
+  {
+    text: 'architectural photograph, white concrete facade with timber accents, urban park setting, golden hour lighting, 35mm lens, high detail',
+    tool: 'Flux + ControlNet',
+    use: 'Exterior render',
+    path: 'rhino-controlnet',
+    pathTitle: 'Rhino viewport → ControlNet → AI architectural render',
+    author: 'Sarah Chen',
+    tip: 'Material descriptors that work: white concrete, exposed aggregate, weathered timber, brushed steel, glass curtain wall, rammed earth.',
+  },
+  {
+    text: 'architectural photograph, [material] facade, [context/site], [lighting condition], [lens mm], high detail',
+    tool: 'Flux',
+    use: 'Batch render',
+    path: 'comfyui-arch-render',
+    pathTitle: 'ComfyUI batch pipeline for architectural concept renders',
+    author: 'Lina Park',
+    tip: 'Add a style suffix to every prompt for consistency: "editorial architecture photography style, Dezeen".',
+  },
+  {
+    text: 'clean architectural floor plan, black lines on white background, precise wall thickness, door swings shown, room labels, dimensions',
+    tool: 'Fal.ai',
+    use: 'Sketch cleanup',
+    path: 'revit-ai-floorplan',
+    pathTitle: 'Hand sketch → AI → Revit floor plan in 2 hours',
+    author: 'Ahmed Yakout',
+    tip: 'If walls aren\'t straight, add "orthogonal walls, right angles" to prompt.',
+  },
+  {
+    text: 'interior photograph, [room type], [style descriptor], [material palette], [lighting], [camera lens], architectural digest quality',
+    tool: 'Stable Diffusion',
+    use: 'Interior render',
+    path: 'stable-diffusion-interiors',
+    pathTitle: 'SketchUp model → Stable Diffusion interior visualization',
+    author: 'Sarah Chen',
+    tip: 'Name specific magazines — "Architectural Digest", "Dwell", "Elle Decor" — this calibrates style better than adjectives.',
+  },
+  {
+    text: 'interior photograph, open plan kitchen, scandinavian minimal, white oak and marble, morning light from east windows, 28mm lens, architectural digest quality',
+    tool: 'Stable Diffusion',
+    use: 'Interior render',
+    path: 'stable-diffusion-interiors',
+    pathTitle: 'SketchUp model → Stable Diffusion interior visualization',
+    author: 'Sarah Chen',
+    tip: 'Describe style, not brand. AI doesn\'t know Eames from IKEA.',
+  },
+];
+
+const allTools = [...new Set(prompts.map(p => p.tool))].sort();
+const allUses = [...new Set(prompts.map(p => p.use))].sort();
+---
+
+<BaseLayout title="Prompt Library">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-4xl">
+      <h1 class="text-2xl font-bold text-white mb-2">Prompt library</h1>
+      <p class="text-text-muted text-sm mb-8">Every working prompt extracted from published paths. Copy, adapt, use.</p>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-4 mb-8">
+        <div>
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Tool</div>
+          <div class="flex flex-wrap gap-1">
+            <button class="tag filter-btn" data-filter="tool" data-value="all">All</button>
+            {allTools.map(t => (
+              <button class="tag filter-btn" data-filter="tool" data-value={t}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Use case</div>
+          <div class="flex flex-wrap gap-1">
+            <button class="tag filter-btn" data-filter="use" data-value="all">All</button>
+            {allUses.map(u => (
+              <button class="tag filter-btn" data-filter="use" data-value={u}>{u}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompts -->
+      <div id="prompt-list" class="flex flex-col gap-3">
+        {prompts.map((p, i) => (
+          <div class="prompt-card border border-border-primary bg-bg-secondary hover:border-border-secondary transition-all" data-tool={p.tool} data-use={p.use}>
+            <div class="p-4">
+              <div class="flex items-center gap-2 mb-3">
+                <span class="tag text-[0.65rem]">{p.tool}</span>
+                <span class="tag text-[0.65rem]">{p.use}</span>
+              </div>
+              <div class="relative group">
+                <pre class="bg-bg-primary border border-border-primary p-3 text-sm font-mono text-text-primary overflow-x-auto"><code>{p.text}</code></pre>
+                <button class="copy-prompt-btn absolute top-2 right-2 px-2 py-1 text-[0.65rem] bg-bg-tertiary border border-border-primary text-text-muted opacity-0 group-hover:opacity-100 transition-opacity hover:text-white hover:border-border-active" data-text={p.text}>
+                  Copy
+                </button>
+              </div>
+              {p.tip && (
+                <p class="text-text-muted text-xs mt-2 italic">Tip: {p.tip}</p>
+              )}
+              <div class="flex items-center justify-between mt-3 pt-2 border-t border-border-primary text-xs text-text-muted">
+                <a href={`/paths/${p.path}`} class="hover:text-white transition-colors">From: {p.pathTitle}</a>
+                <span>{p.author}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div id="no-prompts" class="hidden text-center py-12 text-text-muted text-sm">
+        No prompts match your filters.
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script is:inline>
+    let filters = { tool: 'all', use: 'all' };
+
+    function applyFilters() {
+      let visible = 0;
+      document.querySelectorAll('.prompt-card').forEach(card => {
+        let show = true;
+        if (filters.tool !== 'all' && card.dataset.tool !== filters.tool) show = false;
+        if (filters.use !== 'all' && card.dataset.use !== filters.use) show = false;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      document.getElementById('no-prompts').classList.toggle('hidden', visible > 0);
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('tag-active', filters[btn.dataset.filter] === btn.dataset.value);
+      });
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        filters[btn.dataset.filter] = btn.dataset.value;
+        applyFilters();
+      });
+    });
+
+    document.querySelectorAll('.copy-prompt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.dataset.text).then(() => {
+          const toast = document.getElementById('toast');
+          toast.textContent = 'Prompt copied';
+          toast.classList.add('visible');
+          setTimeout(() => toast.classList.remove('visible'), 2000);
+          btn.textContent = 'Copied';
+          setTimeout(() => btn.textContent = 'Copy', 1500);
+        });
+      });
+    });
+
+    applyFilters();
+  </script>
+</BaseLayout>
