@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const paths = await getCollection('paths');
+
+const collections = [
+  {
+    id: 'competition-toolkit',
+    name: 'Competition Toolkit',
+    description: 'Everything you need for an architecture competition — from site capture to final renders. Zero-budget, maximum impact.',
+    pathSlugs: ['nerf-site-capture', 'rhino-controlnet', 'comfyui-arch-render'],
+    icon: '01',
+  },
+  {
+    id: 'ai-rendering-complete',
+    name: 'AI Rendering — The Complete Guide',
+    description: 'Every AI rendering workflow in the registry. Interiors, exteriors, batch pipelines. From SketchUp to production.',
+    pathSlugs: ['stable-diffusion-interiors', 'rhino-controlnet', 'comfyui-arch-render'],
+    icon: '02',
+  },
+  {
+    id: 'gaussian-splatting-everything',
+    name: 'Gaussian Splatting for Architects',
+    description: 'Capture, process, and relight real buildings using gaussian splatting. The complete workflow from photos to mood boards.',
+    pathSlugs: ['gaussian-relight', 'nerf-site-capture'],
+    icon: '03',
+  },
+  {
+    id: 'fast-design-tools',
+    name: 'Speed Up Your Design Process',
+    description: 'AI tools that cut hours off schematic design. Sketch-to-plan, quick renders, automated variations.',
+    pathSlugs: ['revit-ai-floorplan', 'rhino-controlnet', 'stable-diffusion-interiors'],
+    icon: '04',
+  },
+];
+
+const resolved = collections.map(c => ({
+  ...c,
+  paths: c.pathSlugs.map(s => paths.find(p => p.id === s)).filter(Boolean),
+  totalTime: c.pathSlugs.map(s => paths.find(p => p.id === s)).filter(Boolean).reduce((acc, p) => {
+    const match = p!.data['time-actual'].match(/(\d+)/);
+    return acc + (match ? parseInt(match[1]) : 0);
+  }, 0),
+}));
+---
+
+<BaseLayout title="Collections">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-4xl">
+      <h1 class="text-2xl font-bold text-white mb-2">Collections</h1>
+      <p class="text-text-muted text-sm mb-8">Curated sets of paths for specific goals. Follow a collection start to finish.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {resolved.map((c) => (
+          <div class="border border-border-primary bg-bg-secondary hover:border-border-secondary transition-all">
+            <div class="p-6">
+              <div class="text-text-muted font-mono text-sm mb-3">{c.icon}</div>
+              <h3 class="text-white font-bold text-lg">{c.name}</h3>
+              <p class="text-text-muted text-xs mt-2">{c.description}</p>
+
+              <div class="flex items-center gap-3 mt-4 text-xs text-text-muted">
+                <span>{c.paths.length} paths</span>
+              </div>
+
+              <div class="border-t border-border-primary mt-4 pt-4 flex flex-col gap-2">
+                {c.paths.map((p, i) => (
+                  <a href={`/paths/${p!.id}`} class="flex items-center gap-3 px-2 py-1.5 hover:bg-bg-tertiary transition-all group">
+                    <span class="text-text-muted font-mono text-xs w-4">{i + 1}</span>
+                    <span class="text-sm text-text-secondary group-hover:text-white transition-colors truncate">{p!.data.title}</span>
+                  </a>
+                ))}
+              </div>
+
+              <button class="download-context btn btn-sm mt-4" data-name={c.name} data-slugs={c.pathSlugs.join(',')}>
+                Download context pack
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script is:inline>
+    document.querySelectorAll('.download-context').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const slugs = btn.dataset.slugs.split(',');
+        const name = btn.dataset.name;
+        let content = `# Context Pack: ${name}\n# Generated from arch·kb (arch-kb.com)\n# Feed this file to an AI agent for full workflow context.\n\n---\n\n`;
+
+        for (const slug of slugs) {
+          try {
+            const res = await fetch('/raw/' + slug);
+            const text = await res.text();
+            content += text + '\n\n---\n\n';
+          } catch(e) {}
+        }
+
+        const blob = new Blob([content], { type: 'text/markdown' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.context.md';
+        a.click();
+        URL.revokeObjectURL(a.href);
+
+        const toast = document.getElementById('toast');
+        toast.textContent = 'Context pack downloaded';
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 2000);
+      });
+    });
+  </script>
+</BaseLayout>

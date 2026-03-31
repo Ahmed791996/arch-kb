@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { users, authorToUsername } from '../data/users';
+
+const paths = await getCollection('paths');
+
+// Build leaderboard data
+const contributors = users.map(u => {
+  const userPaths = paths.filter(p => authorToUsername[p.data.author] === u.username);
+  const tools = [...new Set(userPaths.flatMap(p => p.data.tools))];
+  return {
+    ...u,
+    paths: userPaths.length,
+    tools: tools.length,
+    difficulties: [...new Set(userPaths.map(p => p.data.difficulty))],
+    score: userPaths.length * 10 + tools.length * 2,
+  };
+}).sort((a, b) => b.score - a.score);
+
+// Top paths by tool count and complexity
+const topPaths = [...paths]
+  .map(p => ({ ...p, score: p.data.tools.length * 3 + (p.data.difficulty === 'advanced' ? 10 : p.data.difficulty === 'intermediate' ? 5 : 2) }))
+  .sort((a, b) => b.score - a.score);
+
+const diffLabel: Record<string, string> = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+---
+
+<BaseLayout title="Leaderboard">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-4xl">
+      <h1 class="text-2xl font-bold text-white mb-2">Leaderboard</h1>
+      <p class="text-text-muted text-sm mb-8">Top contributors and paths ranked by impact</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Contributors -->
+        <div>
+          <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Top contributors</h2>
+          <div class="flex flex-col gap-2">
+            {contributors.map((c, i) => (
+              <a href={`/user/${c.username}`} class="flex items-center gap-4 border border-border-primary bg-bg-secondary p-4 hover:border-border-secondary transition-all">
+                <div class="text-lg font-bold text-text-muted font-mono w-6 text-right">{i + 1}</div>
+                <div class="w-10 h-10 bg-bg-tertiary border border-border-primary flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                  {c.displayName.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-white font-semibold text-sm">{c.displayName}</div>
+                  <div class="text-text-muted text-xs">{c.role} · {c.affiliation}</div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-white font-bold text-sm">{c.score}</div>
+                  <div class="text-text-muted text-[0.6rem]">{c.paths} paths · {c.tools} tools</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <!-- Top Paths -->
+        <div>
+          <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Top paths</h2>
+          <div class="flex flex-col gap-2">
+            {topPaths.map((p, i) => (
+              <a href={`/paths/${p.id}`} class="flex items-center gap-4 border border-border-primary bg-bg-secondary p-4 hover:border-border-secondary transition-all">
+                <div class="text-lg font-bold text-text-muted font-mono w-6 text-right">{i + 1}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-white font-semibold text-sm truncate">{p.data.title}</div>
+                  <div class="text-text-muted text-xs mt-0.5">{p.data.author}</div>
+                  <div class="flex gap-1 mt-1">
+                    <span class="tag text-[0.6rem]">{diffLabel[p.data.difficulty]}</span>
+                    <span class="tag text-[0.6rem]">{p.data.tools.length} tools</span>
+                  </div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-white font-bold text-sm" id={`upvote-${p.id}`}>0</div>
+                  <div class="text-text-muted text-[0.6rem]">upvotes</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Populate upvote counts from localStorage
+    const upvotes = JSON.parse(localStorage.getItem('archkb_upvotes') || '{}');
+    Object.entries(upvotes).forEach(([slug, count]) => {
+      const el = document.getElementById('upvote-' + slug);
+      if (el) el.textContent = count;
+    });
+  </script>
+</BaseLayout>

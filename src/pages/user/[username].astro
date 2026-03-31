@@ -44,8 +44,13 @@ const gradients = [
           <p class="text-text-muted text-xs">{user.affiliation}</p>
           <p class="text-text-secondary text-sm mt-4">{user.bio}</p>
 
+          <button id="follow-btn" class="btn btn-sm w-full mt-4" data-username={user.username} data-name={user.displayName}>
+            <span id="follow-text">Follow</span>
+          </button>
+
           <div class="border-t border-border-primary mt-4 pt-4 flex flex-col gap-2 text-xs text-text-muted">
             <div class="flex justify-between"><span>Paths</span><span class="text-white">{userPaths.length}</span></div>
+            <div class="flex justify-between"><span>Followers</span><span class="text-white" id="follower-count">0</span></div>
             <div class="flex justify-between"><span>Joined</span><span class="text-white">{user.joined}</span></div>
           </div>
 
@@ -193,6 +198,42 @@ const gradients = [
     vt?.addEventListener('click', ()=>sv('thumb'));
     vl?.addEventListener('click', ()=>sv('list'));
     sv(cv);
+
+    // Follow
+    const followBtn = document.getElementById('follow-btn');
+    const followText = document.getElementById('follow-text');
+    const followerCount = document.getElementById('follower-count');
+    function getFollowing() { return JSON.parse(localStorage.getItem('archkb_following') || '[]'); }
+    function getFollowers(u) { return JSON.parse(localStorage.getItem('archkb_followers_' + u) || '0'); }
+    function updateFollowUI() {
+      const username = followBtn?.dataset.username;
+      const following = getFollowing();
+      const isFollowing = following.includes(username);
+      if (isFollowing) { followText.textContent = 'Following'; followBtn.classList.add('btn-primary'); }
+      else { followText.textContent = 'Follow'; followBtn.classList.remove('btn-primary'); }
+      followerCount.textContent = getFollowers(username);
+    }
+    followBtn?.addEventListener('click', () => {
+      const username = followBtn.dataset.username;
+      let following = getFollowing();
+      let count = parseInt(getFollowers(username));
+      if (following.includes(username)) {
+        following = following.filter(u => u !== username);
+        count = Math.max(0, count - 1);
+      } else {
+        following.push(username);
+        count++;
+        // Add notification
+        const notifs = JSON.parse(localStorage.getItem('archkb_notifs') || '[]');
+        const user = JSON.parse(localStorage.getItem('archkb_user') || '{}');
+        notifs.unshift({ text: `You followed ${followBtn.dataset.name}`, date: new Date().toISOString(), read: false });
+        localStorage.setItem('archkb_notifs', JSON.stringify(notifs));
+      }
+      localStorage.setItem('archkb_following', JSON.stringify(following));
+      localStorage.setItem('archkb_followers_' + username, count);
+      updateFollowUI();
+    });
+    updateFollowUI();
 
     // Bookmarks
     const bookmarks = JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]');

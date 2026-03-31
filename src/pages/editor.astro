@@ -1,0 +1,191 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Path Editor">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-white">Path editor</h1>
+          <p class="text-text-muted text-sm mt-1">Write and preview your .path.md file</p>
+        </div>
+        <div class="flex gap-2">
+          <button id="load-template" class="btn btn-sm">Load template</button>
+          <button id="download-path" class="btn btn-sm">Download .path.md</button>
+          <button id="copy-path" class="btn btn-sm btn-primary">Copy to clipboard</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border border-border-primary">
+        <!-- Editor -->
+        <div class="border-r border-border-primary">
+          <div class="px-4 py-2 border-b border-border-primary bg-bg-secondary text-xs text-text-muted">
+            Markdown editor
+          </div>
+          <textarea
+            id="editor"
+            class="w-full bg-bg-primary text-text-primary font-mono text-sm p-4 outline-none resize-none"
+            style="min-height: 70vh;"
+            spellcheck="false"
+            placeholder="Start writing your .path.md here..."
+          >{`---
+title: ""
+goal: ""
+tools: []
+time-actual: ""
+difficulty: beginner
+result-quality: draft
+author: ""
+updated: "${new Date().toISOString().slice(0, 7)}"
+ai-summary: >
+
+---
+
+## Goal
+
+
+
+## Tools
+
+| Tool | Role | Version / Notes |
+| ---- | ---- | --------------- |
+|      |      |                 |
+
+## Path
+
+### Step 1 —
+
+
+
+## Dead Ends
+
+| What I tried | Why it failed |
+| ------------ | ------------- |
+|              |               |
+
+## Prompts That Worked
+
+
+
+## For AI Agents Replicating This Path
+
+
+
+## Result
+
+`}</textarea>
+        </div>
+
+        <!-- Preview -->
+        <div>
+          <div class="px-4 py-2 border-b border-border-primary bg-bg-secondary text-xs text-text-muted">
+            Preview
+          </div>
+          <div id="preview" class="prose p-4" style="min-height: 70vh;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script is:inline>
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+
+    function renderPreview() {
+      let md = editor.value;
+      // Strip frontmatter for preview
+      const fmMatch = md.match(/^---\n[\s\S]*?\n---\n/);
+      if (fmMatch) {
+        const fm = fmMatch[0];
+        md = md.slice(fm.length);
+        // Extract title from frontmatter
+        const titleMatch = fm.match(/title:\s*"(.+)"/);
+        if (titleMatch) {
+          md = '# ' + titleMatch[1] + '\n\n' + md;
+        }
+      }
+
+      // Simple markdown rendering
+      let html = md
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(?!<[hulo])/gm, '');
+
+      // Tables (basic)
+      html = html.replace(/\|(.+)\|\n\|[-| ]+\|\n((?:\|.+\|\n?)+)/g, (match, header, rows) => {
+        const ths = header.split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
+        const trs = rows.trim().split('\n').map(row => {
+          const tds = row.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+          return `<tr>${tds}</tr>`;
+        }).join('');
+        return `<table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+      });
+
+      // Code blocks
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+
+      preview.innerHTML = html || '<p class="text-text-muted">Start typing to see preview...</p>';
+    }
+
+    editor.addEventListener('input', renderPreview);
+    renderPreview();
+
+    // Tab key inserts spaces
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = editor.selectionStart;
+        editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(editor.selectionEnd);
+        editor.selectionStart = editor.selectionEnd = start + 2;
+        renderPreview();
+      }
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    document.getElementById('copy-path')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(editor.value).then(() => showToast('Copied to clipboard'));
+    });
+
+    document.getElementById('download-path')?.addEventListener('click', () => {
+      const blob = new Blob([editor.value], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      const titleMatch = editor.value.match(/title:\s*"(.+)"/);
+      const filename = titleMatch ? titleMatch[1].toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'my-path';
+      a.download = filename + '.path.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Downloaded');
+    });
+
+    document.getElementById('load-template')?.addEventListener('click', () => {
+      window.location.href = '/templates';
+    });
+
+    // Auto-save to localStorage
+    const savedDraft = localStorage.getItem('archkb_editor_draft');
+    if (savedDraft && savedDraft.length > 50) {
+      editor.value = savedDraft;
+      renderPreview();
+    }
+    editor.addEventListener('input', () => {
+      localStorage.setItem('archkb_editor_draft', editor.value);
+    });
+  </script>
+</BaseLayout>

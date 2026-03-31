@@ -14,6 +14,27 @@
   --color-accent: #ffffff;
 }
 
+/* Light theme override */
+[data-theme="light"] {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-tertiary: #ebebeb;
+  --color-bg-elevated: #e0e0e0;
+  --color-border-primary: #e0e0e0;
+  --color-border-secondary: #cccccc;
+  --color-border-active: #999999;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555555;
+  --color-text-muted: #888888;
+  --color-accent: #000000;
+}
+
+[data-theme="light"] .text-white { color: #1a1a1a !important; }
+[data-theme="light"] .bg-white { background: #1a1a1a !important; color: #ffffff !important; }
+[data-theme="light"] .btn-primary { background: #1a1a1a !important; color: #ffffff !important; border-color: #1a1a1a !important; }
+[data-theme="light"] .btn-primary:hover { background: #333 !important; border-color: #333 !important; }
+[data-theme="light"] .toast { background: #1a1a1a !important; color: #ffffff !important; }
+
 html {
   background: var(--color-bg-primary);
   color: var(--color-text-primary);

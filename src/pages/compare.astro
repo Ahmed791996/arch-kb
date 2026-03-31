@@ -1,0 +1,115 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const paths = await getCollection('paths');
+
+// Build comparison data from dead ends and tool usage across paths
+const comparisons = [
+  {
+    id: 'nerf-vs-gaussian',
+    title: 'NeRF vs Gaussian Splatting',
+    toolA: 'Nerfstudio (NeRF)',
+    toolB: '3DGS (Gaussian Splatting)',
+    categories: [
+      { label: 'Training time', a: '4–8 hours', b: '20–30 minutes', winner: 'b' },
+      { label: 'Visual quality', a: 'Excellent', b: 'Excellent', winner: 'tie' },
+      { label: 'Point cloud export', a: 'Good (built-in)', b: 'Noisy (needs cleanup)', winner: 'a' },
+      { label: 'Real-time viewing', a: 'Requires viewer', b: 'Native real-time', winner: 'b' },
+      { label: 'GPU requirement', a: 'RTX 3060+', b: 'RTX 3060+', winner: 'tie' },
+      { label: 'Best for', a: 'Site documentation, point clouds', b: 'Visualization, relighting', winner: 'tie' },
+    ],
+    verdict: 'Use 3DGS for speed and visualization. Use NeRF when you need clean point cloud export for CAD import.',
+    sources: ['gaussian-relight', 'nerf-site-capture'],
+  },
+  {
+    id: 'flux-vs-sdxl',
+    title: 'Flux vs Stable Diffusion XL',
+    toolA: 'Flux (dev)',
+    toolB: 'Stable Diffusion XL',
+    categories: [
+      { label: 'Architecture understanding', a: 'Excellent', b: 'Good', winner: 'a' },
+      { label: 'ControlNet support', a: 'Depth + lineart', b: 'Full suite', winner: 'b' },
+      { label: 'VRAM required', a: '12GB+', b: '8GB+', winner: 'b' },
+      { label: 'Batch consistency', a: 'High', b: 'Medium', winner: 'a' },
+      { label: 'Speed', a: '~2 min/image', b: '~30 sec/image', winner: 'b' },
+      { label: 'Interior quality', a: 'Good', b: 'Good with magazine prompts', winner: 'tie' },
+    ],
+    verdict: 'Use Flux for exteriors and batch pipelines. Use SDXL for interiors and when VRAM is limited.',
+    sources: ['rhino-controlnet', 'comfyui-arch-render', 'stable-diffusion-interiors'],
+  },
+  {
+    id: 'midjourney-vs-controlnet',
+    title: 'Midjourney vs ControlNet Pipelines',
+    toolA: 'Midjourney',
+    toolB: 'ComfyUI + ControlNet',
+    categories: [
+      { label: 'Geometry accuracy', a: 'Low — ignores input', b: 'High — depth-guided', winner: 'b' },
+      { label: 'Ease of use', a: 'Very easy (text only)', b: 'Complex (node setup)', winner: 'a' },
+      { label: 'Batch capability', a: 'Limited (Discord rate limits)', b: 'Unlimited (API)', winner: 'b' },
+      { label: 'Style quality', a: 'Excellent', b: 'Good (prompt-dependent)', winner: 'a' },
+      { label: 'Cost', a: '$10–30/month', b: 'Free (local GPU)', winner: 'b' },
+      { label: 'Architecture use', a: 'Mood boards only', b: 'Production renders', winner: 'b' },
+    ],
+    verdict: 'Midjourney for early concept mood boards. ControlNet pipelines for anything that needs to match actual geometry.',
+    sources: ['rhino-controlnet', 'comfyui-arch-render'],
+  },
+];
+---
+
+<BaseLayout title="Compare Tools">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-4xl">
+      <h1 class="text-2xl font-bold text-white mb-2">Tool comparisons</h1>
+      <p class="text-text-muted text-sm mb-8">Side-by-side comparisons pulled from real dead ends and results across paths</p>
+
+      <div class="flex flex-col gap-8">
+        {comparisons.map((comp) => (
+          <div class="border border-border-primary bg-bg-secondary">
+            <div class="p-6 border-b border-border-primary">
+              <h2 class="text-white font-bold text-lg">{comp.title}</h2>
+              <div class="flex items-center gap-3 mt-2 text-xs text-text-muted">
+                <span>Based on {comp.sources.length} paths</span>
+                <span>·</span>
+                {comp.sources.map(s => (
+                  <a href={`/paths/${s}`} class="hover:text-white transition-colors underline underline-offset-2">{s}</a>
+                ))}
+              </div>
+            </div>
+
+            <!-- Comparison table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-border-primary">
+                    <th class="text-left text-text-muted font-medium p-4 w-1/3"></th>
+                    <th class="text-left text-white font-semibold p-4 w-1/3">{comp.toolA}</th>
+                    <th class="text-left text-white font-semibold p-4 w-1/3">{comp.toolB}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comp.categories.map((cat) => (
+                    <tr class="border-b border-border-primary">
+                      <td class="p-4 text-text-muted text-xs">{cat.label}</td>
+                      <td class={`p-4 text-xs ${cat.winner === 'a' ? 'text-white font-semibold' : 'text-text-secondary'}`}>
+                        {cat.a} {cat.winner === 'a' && '←'}
+                      </td>
+                      <td class={`p-4 text-xs ${cat.winner === 'b' ? 'text-white font-semibold' : 'text-text-secondary'}`}>
+                        {cat.b} {cat.winner === 'b' && '←'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-4 bg-bg-primary border-t border-border-primary">
+              <div class="text-xs text-text-muted uppercase tracking-wider mb-1">Verdict</div>
+              <p class="text-text-secondary text-sm">{comp.verdict}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</BaseLayout>

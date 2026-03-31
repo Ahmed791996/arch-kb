@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { buildSearchIndex } from '../data/search-index';
 
 interface Props {
   title: string;
@@ -7,9 +8,10 @@ interface Props {
 }
 
 const { title, description = 'AI Path Registry for Architecture' } = Astro.props;
+const searchIndex = await buildSearchIndex();
 ---
 
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,8 +20,12 @@ const { title, description = 'AI Path Registry for Architecture' } = Astro.props
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="alternate" type="application/rss+xml" title="arch·kb RSS" href="/rss.xml" />
+    <script is:inline>
+      if (localStorage.getItem('archkb_theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    </script>
   </head>
-  <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col">
+  <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col" data-search-index={JSON.stringify(searchIndex)}>
     <nav class="border-b border-border-primary px-8 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-6">
@@ -30,12 +36,40 @@ const { title, description = 'AI Path Registry for Architecture' } = Astro.props
             <a href="/explore" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Explore</a>
             <a href="/prompts" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Prompts</a>
             <a href="/learn" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Learn</a>
-            <a href="/templates" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Templates</a>
-            <a href="/contributors" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Contributors</a>
-            <a href="/this-week" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">This Week</a>
+            <a href="/collections" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Collections</a>
+            <!-- More dropdown -->
+            <div class="relative" id="more-dropdown-wrapper">
+              <button id="more-dropdown-btn" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">More</button>
+              <div id="more-dropdown" class="hidden absolute left-0 top-full mt-1 w-48 border border-border-secondary bg-bg-primary shadow-2xl z-50">
+                <a href="/leaderboard" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Leaderboard</a>
+                <a href="/feed" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Activity Feed</a>
+                <a href="/compare" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Compare Tools</a>
+                <a href="/editor" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Path Editor</a>
+                <a href="/templates" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Templates</a>
+                <a href="/analytics" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Analytics</a>
+                <a href="/contributors" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Contributors</a>
+                <a href="/this-week" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">This Week</a>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="auth-nav" class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <!-- Search trigger -->
+          <button id="search-trigger" class="btn btn-ghost btn-sm gap-1.5" title="Search (Ctrl+K)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+            <span class="text-text-muted text-xs hidden md:inline">Ctrl+K</span>
+          </button>
+          <!-- Notifications -->
+          <button id="notif-btn" class="btn btn-ghost btn-sm relative" title="Notifications">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6v3L2 11h12l-1.5-2V6c0-2.5-2-4.5-4.5-4.5z"/><path d="M6.5 13a1.5 1.5 0 003 0"/></svg>
+            <span id="notif-badge" class="hidden absolute -top-1 -right-1 w-3.5 h-3.5 bg-white text-black text-[0.5rem] font-bold flex items-center justify-center">0</span>
+          </button>
+          <!-- Theme toggle -->
+          <button id="theme-toggle" class="btn btn-ghost btn-sm" title="Toggle theme">
+            <svg id="icon-dark" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1a7 7 0 100 14 5.5 5.5 0 010-14z"/></svg>
+            <svg id="icon-light" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="hidden"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+          </button>
+          <!-- Auth -->
           <a href="/login" class="btn btn-sm" id="login-btn">Log in</a>
           <a href="/register" class="btn btn-sm btn-primary" id="register-btn">Sign up</a>
           <div id="user-menu" class="hidden flex items-center gap-3">
@@ -46,15 +80,54 @@ const { title, description = 'AI Path Registry for Architecture' } = Astro.props
       </div>
     </nav>
 
+    <!-- Cmd+K Search Modal -->
+    <div id="search-modal" class="fixed inset-0 z-50 hidden">
+      <div id="search-backdrop" class="absolute inset-0 bg-black/60"></div>
+      <div class="relative max-w-xl mx-auto mt-[15vh]">
+        <div class="border border-border-secondary bg-bg-primary shadow-2xl">
+          <div class="flex items-center gap-3 px-4 py-3 border-b border-border-primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="text-text-muted shrink-0"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+            <input id="search-input-global" type="text" class="flex-1 bg-transparent text-white outline-none text-sm" placeholder="Search paths, tools, prompts, contributors..." autofocus />
+            <kbd class="text-[0.6rem] text-text-muted border border-border-primary px-1.5 py-0.5">ESC</kbd>
+          </div>
+          <div id="search-results" class="max-h-80 overflow-y-auto">
+            <div class="px-4 py-8 text-center text-text-muted text-sm">Type to search...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications panel -->
+    <div id="notif-panel" class="fixed top-12 right-4 z-40 hidden w-80 border border-border-secondary bg-bg-primary shadow-2xl">
+      <div class="px-4 py-3 border-b border-border-primary flex items-center justify-between">
+        <span class="text-xs text-text-muted uppercase tracking-wider">Notifications</span>
+        <button id="notif-clear" class="text-[0.65rem] text-text-muted hover:text-white">Clear all</button>
+      </div>
+      <div id="notif-list" class="max-h-64 overflow-y-auto">
+        <div class="px-4 py-6 text-center text-text-muted text-sm">No notifications</div>
+      </div>
+    </div>
+
     <main class="flex-1">
       <slot />
     </main>
 
     <footer class="border-t border-border-primary text-text-muted text-xs text-center py-6">
-      arch·kb — AI Path Registry for Architecture
+      <div class="flex items-center justify-center gap-4">
+        <span>arch·kb — AI Path Registry for Architecture</span>
+        <a href="/rss.xml" class="hover:text-white transition-colors">RSS</a>
+        <a href="/api/paths.json" class="hover:text-white transition-colors">API</a>
+      </div>
     </footer>
 
     <script is:inline>
+      // ── More dropdown ──
+      const moreBtn = document.getElementById('more-dropdown-btn');
+      const moreDrop = document.getElementById('more-dropdown');
+      moreBtn?.addEventListener('click', (e) => { e.stopPropagation(); moreDrop.classList.toggle('hidden'); });
+      document.addEventListener('click', () => moreDrop?.classList.add('hidden'));
+
+      // ── Auth ──
       function checkAuth() {
         const user = localStorage.getItem('archkb_user');
         const loginBtn = document.getElementById('login-btn');
@@ -76,6 +149,103 @@ const { title, description = 'AI Path Registry for Architecture' } = Astro.props
         window.location.href = '/';
       });
       checkAuth();
+
+      // ── Theme ──
+      const themeToggle = document.getElementById('theme-toggle');
+      const iconDark = document.getElementById('icon-dark');
+      const iconLight = document.getElementById('icon-light');
+      function updateThemeIcons() {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        iconDark.classList.toggle('hidden', isLight);
+        iconLight.classList.toggle('hidden', !isLight);
+      }
+      themeToggle?.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('archkb_theme', next);
+        updateThemeIcons();
+      });
+      updateThemeIcons();
+
+      // ── Search Modal ──
+      const searchModal = document.getElementById('search-modal');
+      const searchInput = document.getElementById('search-input-global');
+      const searchResults = document.getElementById('search-results');
+      const searchBackdrop = document.getElementById('search-backdrop');
+
+      function openSearch() { searchModal.classList.remove('hidden'); searchInput.focus(); searchInput.value = ''; searchResults.innerHTML = '<div class="px-4 py-8 text-center text-text-muted text-sm">Type to search...</div>'; }
+      function closeSearch() { searchModal.classList.add('hidden'); }
+
+      document.getElementById('search-trigger')?.addEventListener('click', openSearch);
+      searchBackdrop?.addEventListener('click', closeSearch);
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+        if (e.key === 'Escape') closeSearch();
+      });
+
+      // Search index (injected from pages via data attributes)
+      const searchIndex = JSON.parse(document.body.dataset.searchIndex || '[]');
+      searchInput?.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (!q) { searchResults.innerHTML = '<div class="px-4 py-8 text-center text-text-muted text-sm">Type to search...</div>'; return; }
+        const matches = searchIndex.filter(item =>
+          item.title.toLowerCase().includes(q) ||
+          item.description.toLowerCase().includes(q) ||
+          (item.tags || '').toLowerCase().includes(q)
+        ).slice(0, 8);
+        if (matches.length === 0) { searchResults.innerHTML = '<div class="px-4 py-6 text-center text-text-muted text-sm">No results</div>'; return; }
+        searchResults.innerHTML = matches.map(m => `
+          <a href="${m.url}" class="flex items-center gap-3 px-4 py-3 hover:bg-bg-tertiary transition-colors border-b border-border-primary">
+            <span class="text-[0.6rem] uppercase tracking-wider text-text-muted w-12 shrink-0">${m.type}</span>
+            <div class="min-w-0">
+              <div class="text-sm text-white truncate">${m.title}</div>
+              <div class="text-xs text-text-muted truncate">${m.description}</div>
+            </div>
+          </a>
+        `).join('');
+      });
+
+      // ── Notifications ──
+      const notifBtn = document.getElementById('notif-btn');
+      const notifPanel = document.getElementById('notif-panel');
+      const notifBadge = document.getElementById('notif-badge');
+      const notifList = document.getElementById('notif-list');
+
+      function getNotifs() { return JSON.parse(localStorage.getItem('archkb_notifs') || '[]'); }
+      function renderNotifs() {
+        const notifs = getNotifs();
+        const unread = notifs.filter(n => !n.read).length;
+        notifBadge.textContent = unread;
+        notifBadge.classList.toggle('hidden', unread === 0);
+        if (notifs.length === 0) {
+          notifList.innerHTML = '<div class="px-4 py-6 text-center text-text-muted text-sm">No notifications</div>';
+          return;
+        }
+        notifList.innerHTML = notifs.slice(0, 10).map(n => `
+          <div class="px-4 py-3 border-b border-border-primary ${n.read ? '' : 'bg-bg-secondary'}">
+            <div class="text-xs text-text-secondary">${n.text}</div>
+            <div class="text-[0.6rem] text-text-muted mt-1">${new Date(n.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+          </div>
+        `).join('');
+      }
+
+      notifBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifPanel.classList.toggle('hidden');
+        // Mark all as read
+        const notifs = getNotifs();
+        notifs.forEach(n => n.read = true);
+        localStorage.setItem('archkb_notifs', JSON.stringify(notifs));
+        setTimeout(renderNotifs, 300);
+      });
+      document.addEventListener('click', () => notifPanel?.classList.add('hidden'));
+      notifPanel?.addEventListener('click', e => e.stopPropagation());
+      document.getElementById('notif-clear')?.addEventListener('click', () => {
+        localStorage.setItem('archkb_notifs', '[]');
+        renderNotifs();
+      });
+      renderNotifs();
     </script>
   </body>
 </html>
