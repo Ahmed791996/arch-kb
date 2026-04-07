@@ -20,10 +20,10 @@ const difficultyLabel: Record<string, string> = {
     <div class="w-full px-2">
       <div class="max-w-2xl">
         <h1 class="text-4xl font-bold text-white leading-tight tracking-tight">
-          The path registry for<br/>AI + architecture
+          The path registry for<br/>AI workflows
         </h1>
         <p class="text-text-secondary text-lg mt-4 leading-relaxed">
-          Real workflows from practicing architects. Structured for humans to read and AI agents to replicate. No tutorials. No fluff. Just the exact path someone took.
+          Real workflows from real projects. Structured for humans to read and AI agents to replicate. No tutorials. No fluff. Just the exact path someone took.
         </p>
         <div class="flex gap-3 mt-8">
           <a href="/explore" class="btn btn-primary">Explore paths</a>
@@ -57,7 +57,7 @@ const difficultyLabel: Record<string, string> = {
         <div class="border border-border-primary p-6 bg-bg-secondary">
           <div class="text-white font-mono text-sm mb-3">01</div>
           <h3 class="text-white font-semibold mb-2">Finish a project</h3>
-          <p class="text-text-secondary text-sm">Complete a real architecture + AI workflow. Gaussian splatting, AI rendering, automated pipelines — any tool, any scale.</p>
+          <p class="text-text-secondary text-sm">Complete a real project with AI tools. Rendering, data pipelines, creative workflows — any tool, any domain, any scale.</p>
         </div>
         <div class="border border-border-primary p-6 bg-bg-secondary">
           <div class="text-white font-mono text-sm mb-3">02</div>
@@ -140,17 +140,17 @@ const difficultyLabel: Record<string, string> = {
   <section class="border-b border-border-primary px-6 py-16">
     <div class="w-full px-2">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="/graph" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
+          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Tool ecosystem graph</h3>
+          <p class="text-text-muted text-xs mt-1">Interactive visualization of every tool and how they connect across paths.</p>
+        </a>
+        <a href="/remix" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
+          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Path remix builder</h3>
+          <p class="text-text-muted text-xs mt-1">Pick your tools. We assemble a custom workflow from existing paths.</p>
+        </a>
         <a href="/prompts" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
           <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Prompt library</h3>
           <p class="text-text-muted text-xs mt-1">Every working prompt from every path. Searchable by tool and use case.</p>
-        </a>
-        <a href="/learn" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
-          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Learning paths</h3>
-          <p class="text-text-muted text-xs mt-1">Structured progression from beginner to advanced. Three curated tracks.</p>
-        </a>
-        <a href="/templates" class="border border-border-primary bg-bg-secondary p-6 hover:border-border-secondary transition-all group">
-          <h3 class="text-white font-semibold text-sm group-hover:opacity-80">Path templates</h3>
-          <p class="text-text-muted text-xs mt-1">Blank .path.md templates for common workflow types. Download and fill in.</p>
         </a>
       </div>
     </div>
@@ -161,14 +161,17 @@ const difficultyLabel: Record<string, string> = {
     <div class="w-full px-2">
       <div class="border border-border-primary bg-bg-secondary p-8">
         <div class="flex items-start gap-4">
-          <div class="text-white font-mono text-2xl mt-0.5">⌘</div>
+          <div class="text-white font-mono text-2xl mt-0.5">&#x2318;</div>
           <div>
             <h2 class="text-white font-semibold text-lg">Built for AI agents</h2>
             <p class="text-text-secondary text-sm mt-2 max-w-xl">
-              Every path is simultaneously readable as a rendered page, raw markdown, and indexed in llms.txt. AI agents can find, read, and replicate any published workflow.
+              Every path is simultaneously readable as a rendered page, raw markdown, and indexed in llms.txt. AI agents can discover, read, and replicate any published workflow via our open agent protocol.
             </p>
-            <div class="flex gap-3 mt-4">
+            <div class="flex flex-wrap gap-3 mt-4">
+              <a href="/agent" class="btn btn-sm btn-primary">Agent protocol</a>
               <a href="/llms.txt" class="btn btn-sm">llms.txt</a>
+              <a href="/.well-known/ai-plugin.json" class="btn btn-sm">ai-plugin.json</a>
+              <a href="/api/paths.json" class="btn btn-sm">API</a>
               <a href="/raw/gaussian-relight" class="btn btn-sm">Example raw path</a>
             </div>
           </div>

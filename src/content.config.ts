@@ -13,6 +13,10 @@ const paths = defineCollection({
     author: z.string(),
     updated: z.string(),
     'ai-summary': z.string(),
+    icon: z.string().optional(),
+    thumbnail: z.string().optional(),
+    visibility: z.enum(['public', 'private', 'unlisted']).default('public'),
+    tags: z.array(z.string()).optional(),
   }),
 });
 

@@ -1,0 +1,447 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const paths = await getCollection('paths');
+const allTools = [...new Set(paths.flatMap((p) => p.data.tools))].sort();
+
+// Build nodes (tools) and edges (shared paths between tools)
+const nodes = allTools.map((t) => {
+  const pathsUsing = paths.filter((p) => p.data.tools.includes(t));
+  return {
+    id: t,
+    count: pathsUsing.length,
+    paths: pathsUsing.map((p) => ({ slug: p.id, title: p.data.title })),
+  };
+});
+
+const edges: { source: string; target: string; paths: string[]; weight: number }[] = [];
+paths.forEach((p) => {
+  const tools = p.data.tools;
+  for (let i = 0; i < tools.length; i++) {
+    for (let j = i + 1; j < tools.length; j++) {
+      const key = [tools[i], tools[j]].sort().join('|||');
+      const existing = edges.find((e) => [e.source, e.target].sort().join('|||') === key);
+      if (existing) {
+        existing.paths.push(p.id);
+        existing.weight++;
+      } else {
+        edges.push({ source: tools[i], target: tools[j], paths: [p.id], weight: 1 });
+      }
+    }
+  }
+});
+
+// Also add paths as nodes with connections to their tools
+const pathNodes = paths.map((p) => ({
+  id: `path:${p.id}`,
+  label: p.data.title,
+  count: p.data.tools.length,
+  type: 'path' as const,
+  slug: p.id,
+  paths: [{ slug: p.id, title: p.data.title }],
+}));
+
+const pathEdges = paths.flatMap((p) =>
+  p.data.tools.map((t: string) => ({
+    source: t,
+    target: `path:${p.id}`,
+    paths: [p.id],
+    weight: 1,
+  }))
+);
+
+const graphData = {
+  nodes: [...nodes.map(n => ({ ...n, type: 'tool' as const })), ...pathNodes],
+  edges: [...edges, ...pathEdges],
+};
+---
+
+<BaseLayout title="Tool Graph">
+  <div class="w-full px-6 py-8">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-white">Tool ecosystem</h1>
+        <p class="text-text-muted text-sm mt-1">{allTools.length} tools, {paths.length} paths. Circles = tools, rectangles = paths. Click to explore.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="reset-btn" class="btn btn-sm">Reset view</button>
+        <button id="toggle-labels" class="btn btn-sm">Hide labels</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <!-- Graph -->
+      <div class="lg:col-span-3 border border-border-primary bg-bg-secondary relative" style="height: 70vh;">
+        <svg id="graph-svg" class="w-full h-full"></svg>
+        <!-- Zoom hint -->
+        <div class="absolute bottom-3 left-3 text-[0.6rem] text-text-muted bg-bg-primary/80 px-2 py-1 border border-border-primary">
+          Scroll to zoom. Drag nodes to rearrange. Click to inspect.
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="lg:col-span-1">
+        <!-- Selected tool info -->
+        <div id="tool-info" class="border border-border-primary bg-bg-secondary p-5 mb-4">
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-3">Selected tool</div>
+          <div id="tool-info-empty" class="text-text-muted text-sm">Click a node in the graph</div>
+          <div id="tool-info-content" class="hidden">
+            <h3 id="tool-name" class="text-white font-bold text-lg"></h3>
+            <div id="tool-count" class="text-text-muted text-xs mt-1"></div>
+            <div class="mt-4">
+              <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Used in paths</div>
+              <div id="tool-paths" class="flex flex-col gap-1"></div>
+            </div>
+            <div class="mt-4">
+              <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Connected tools</div>
+              <div id="tool-connections" class="flex flex-wrap gap-1"></div>
+            </div>
+            <a id="tool-explore-link" href="#" class="btn btn-sm btn-primary mt-4 w-full">View in Explore</a>
+          </div>
+        </div>
+
+        <!-- All tools list -->
+        <div class="border border-border-primary bg-bg-secondary p-5">
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-3">All tools</div>
+          <div class="flex flex-col gap-1 max-h-64 overflow-y-auto">
+            {nodes.sort((a, b) => b.count - a.count).map((n) => (
+              <button
+                class="tool-list-btn flex items-center justify-between px-2 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all text-left"
+                data-tool={n.id}
+              >
+                <span class="truncate">{n.id}</span>
+                <span class="text-xs text-text-muted shrink-0 ml-2">{n.count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline define:vars={{ graphData }}>
+    const svg = document.getElementById('graph-svg');
+    const rect = svg.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    let showLabels = true;
+    let selectedTool = null;
+    let transform = { x: 0, y: 0, k: 1 };
+
+    // Initialize node positions in a circle
+    const nodeMap = {};
+    const cx = W / 2;
+    const cy = H / 2;
+    const radius = Math.min(W, H) * 0.35;
+
+    graphData.nodes.forEach((n, i) => {
+      const angle = (2 * Math.PI * i) / graphData.nodes.length;
+      const isPath = n.type === 'path';
+      nodeMap[n.id] = {
+        ...n,
+        x: cx + radius * Math.cos(angle) * (isPath ? 0.7 : 1),
+        y: cy + radius * Math.sin(angle) * (isPath ? 0.7 : 1),
+        vx: 0,
+        vy: 0,
+        r: isPath ? 4 : 6 + n.count * 4,
+      };
+    });
+
+    // Force simulation
+    function simulate() {
+      const nodes = Object.values(nodeMap);
+      const alpha = 0.3;
+      const repulsion = 3000;
+      const attraction = 0.008;
+      const centerForce = 0.01;
+      const damping = 0.6;
+
+      // Repulsion between all nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          let dx = a.x - b.x;
+          let dy = a.y - b.y;
+          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          let force = repulsion / (dist * dist);
+          let fx = (dx / dist) * force;
+          let fy = (dy / dist) * force;
+          a.vx += fx * alpha;
+          a.vy += fy * alpha;
+          b.vx -= fx * alpha;
+          b.vy -= fy * alpha;
+        }
+      }
+
+      // Attraction along edges
+      graphData.edges.forEach((e) => {
+        const a = nodeMap[e.source];
+        const b = nodeMap[e.target];
+        if (!a || !b) return;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let force = dist * attraction * e.weight;
+        let fx = (dx / dist) * force;
+        let fy = (dy / dist) * force;
+        a.vx += fx * alpha;
+        a.vy += fy * alpha;
+        b.vx -= fx * alpha;
+        b.vy -= fy * alpha;
+      });
+
+      // Center gravity
+      nodes.forEach((n) => {
+        n.vx += (cx - n.x) * centerForce;
+        n.vy += (cy - n.y) * centerForce;
+      });
+
+      // Apply velocity with damping
+      nodes.forEach((n) => {
+        if (n._dragging) return;
+        n.vx *= damping;
+        n.vy *= damping;
+        n.x += n.vx;
+        n.y += n.vy;
+        // Bounds
+        n.x = Math.max(n.r + 20, Math.min(W - n.r - 20, n.x));
+        n.y = Math.max(n.r + 20, Math.min(H - n.r - 20, n.y));
+      });
+    }
+
+    function render() {
+      const ns = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+
+      // Create transform group
+      const g = document.createElementNS(ns, 'g');
+      g.setAttribute('transform', `translate(${transform.x},${transform.y}) scale(${transform.k})`);
+
+      // Edges
+      graphData.edges.forEach((e) => {
+        const a = nodeMap[e.source];
+        const b = nodeMap[e.target];
+        if (!a || !b) return;
+        const line = document.createElementNS(ns, 'line');
+        line.setAttribute('x1', a.x);
+        line.setAttribute('y1', a.y);
+        line.setAttribute('x2', b.x);
+        line.setAttribute('y2', b.y);
+
+        const isHighlighted = selectedTool && (e.source === selectedTool || e.target === selectedTool);
+        line.setAttribute('stroke', isHighlighted ? '#ffffff' : '#333333');
+        line.setAttribute('stroke-width', isHighlighted ? 1.5 : 0.5);
+        line.setAttribute('stroke-opacity', isHighlighted ? '1' : '0.5');
+        g.appendChild(line);
+      });
+
+      // Nodes
+      Object.values(nodeMap).forEach((n) => {
+        const isSelected = n.id === selectedTool;
+        const isConnected = selectedTool && graphData.edges.some(
+          (e) => (e.source === selectedTool && e.target === n.id) || (e.target === selectedTool && e.source === n.id)
+        );
+        const isDimmed = selectedTool && !isSelected && !isConnected;
+
+        const isPathNode = n.type === 'path';
+        let shape;
+
+        if (isPathNode) {
+          // Path nodes: small rounded rectangles
+          shape = document.createElementNS(ns, 'rect');
+          const s = n.r * 1.5;
+          shape.setAttribute('x', n.x - s);
+          shape.setAttribute('y', n.y - s * 0.6);
+          shape.setAttribute('width', s * 2);
+          shape.setAttribute('height', s * 1.2);
+          shape.setAttribute('rx', '2');
+          shape.setAttribute('fill', isSelected ? '#ffffff' : isDimmed ? '#0a0a0a' : '#111111');
+          shape.setAttribute('stroke', isSelected ? '#ffffff' : isConnected ? '#444444' : isDimmed ? '#151515' : '#222222');
+          shape.setAttribute('stroke-width', '0.5');
+        } else {
+          // Tool nodes: circles — thin, elegant, hollow
+          shape = document.createElementNS(ns, 'circle');
+          shape.setAttribute('cx', n.x);
+          shape.setAttribute('cy', n.y);
+          shape.setAttribute('r', n.r);
+          shape.setAttribute('fill', isSelected ? '#ffffff' : isDimmed ? '#0a0a0a' : '#0d0d0d');
+          shape.setAttribute('stroke', isSelected ? '#ffffff' : isConnected ? '#555555' : isDimmed ? '#151515' : '#2a2a2a');
+          shape.setAttribute('stroke-width', isSelected ? '1.5' : '0.75');
+        }
+        shape.style.cursor = 'pointer';
+        shape.style.transition = 'all 0.15s ease';
+        shape.dataset.tool = n.id;
+        const circle = shape;
+
+        circle.addEventListener('mousedown', (ev) => {
+          ev.stopPropagation();
+          n._dragging = true;
+          const onMove = (me) => {
+            n.x = (me.clientX - rect.left - transform.x) / transform.k;
+            n.y = (me.clientY - rect.top - transform.y) / transform.k;
+          };
+          const onUp = () => {
+            n._dragging = false;
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+          };
+          window.addEventListener('mousemove', onMove);
+          window.addEventListener('mouseup', onUp);
+        });
+
+        circle.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (isPathNode && n.slug) {
+            window.location.href = '/paths/' + n.slug;
+          } else {
+            selectTool(n.id);
+          }
+        });
+
+        g.appendChild(circle);
+
+        // Label — only show on selected/hovered or if showLabels is on
+        const shouldShowLabel = isSelected || isConnected;
+        if (shouldShowLabel || showLabels) {
+          const text = document.createElementNS(ns, 'text');
+          text.setAttribute('x', n.x);
+          text.setAttribute('y', n.y + n.r + (isPathNode ? 10 : 14));
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('fill', isSelected ? '#ffffff' : isConnected ? '#888888' : '#333333');
+          text.setAttribute('font-size', isPathNode ? '7' : '9');
+          text.setAttribute('font-family', 'Inter, sans-serif');
+          text.setAttribute('font-weight', isSelected ? '600' : '400');
+          text.setAttribute('letter-spacing', '0.02em');
+          const label = isPathNode ? (n.label || n.id.replace('path:', '')).slice(0, 25) : n.id;
+          text.textContent = label;
+          text.style.pointerEvents = 'none';
+          // Fade in only when relevant
+          text.setAttribute('opacity', shouldShowLabel ? '1' : '0.4');
+          g.appendChild(text);
+        }
+
+        // Count inside node (tools only)
+        if (!isPathNode) {
+          const countText = document.createElementNS(ns, 'text');
+          countText.setAttribute('x', n.x);
+          countText.setAttribute('y', n.y + 3);
+          countText.setAttribute('text-anchor', 'middle');
+          countText.setAttribute('fill', isSelected ? '#000000' : isDimmed ? '#222222' : '#666666');
+          countText.setAttribute('font-size', '9');
+          countText.setAttribute('font-family', 'JetBrains Mono, monospace');
+          countText.setAttribute('font-weight', '500');
+          countText.textContent = n.count;
+          countText.style.pointerEvents = 'none';
+          g.appendChild(countText);
+        }
+      });
+
+      svg.appendChild(g);
+    }
+
+    function selectTool(toolId) {
+      selectedTool = toolId === selectedTool ? null : toolId;
+      updateSidebar();
+    }
+
+    function updateSidebar() {
+      const empty = document.getElementById('tool-info-empty');
+      const content = document.getElementById('tool-info-content');
+
+      if (!selectedTool) {
+        empty.classList.remove('hidden');
+        content.classList.add('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      content.classList.remove('hidden');
+
+      const node = nodeMap[selectedTool];
+      document.getElementById('tool-name').textContent = node.id;
+      document.getElementById('tool-count').textContent = `Used in ${node.count} path${node.count !== 1 ? 's' : ''}`;
+
+      const pathsList = document.getElementById('tool-paths');
+      pathsList.innerHTML = node.paths.map((p) =>
+        `<a href="/paths/${p.slug}" class="block px-2 py-1 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">${p.title}</a>`
+      ).join('');
+
+      const connections = graphData.edges
+        .filter((e) => e.source === selectedTool || e.target === selectedTool)
+        .map((e) => e.source === selectedTool ? e.target : e.source);
+
+      document.getElementById('tool-connections').innerHTML = connections.map((t) =>
+        `<button class="tool-conn-btn tag text-[0.65rem] hover:tag-active transition-all cursor-pointer" data-tool="${t}">${t}</button>`
+      ).join('');
+
+      document.querySelectorAll('.tool-conn-btn').forEach((btn) => {
+        btn.addEventListener('click', () => selectTool(btn.dataset.tool));
+      });
+
+      document.getElementById('tool-explore-link').href = `/explore?tool=${encodeURIComponent(selectedTool)}`;
+    }
+
+    // Tool list sidebar click
+    document.querySelectorAll('.tool-list-btn').forEach((btn) => {
+      btn.addEventListener('click', () => selectTool(btn.dataset.tool));
+    });
+
+    // Click background to deselect
+    svg.addEventListener('click', () => selectTool(null));
+
+    // Zoom
+    svg.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const scale = e.deltaY > 0 ? 0.9 : 1.1;
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      transform.k *= scale;
+      transform.k = Math.max(0.3, Math.min(3, transform.k));
+      transform.x = mouseX - (mouseX - transform.x) * scale;
+      transform.y = mouseY - (mouseY - transform.y) * scale;
+    });
+
+    // Pan
+    let isPanning = false;
+    let panStart = { x: 0, y: 0 };
+    svg.addEventListener('mousedown', (e) => {
+      if (e.target === svg) {
+        isPanning = true;
+        panStart = { x: e.clientX - transform.x, y: e.clientY - transform.y };
+      }
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (isPanning) {
+        transform.x = e.clientX - panStart.x;
+        transform.y = e.clientY - panStart.y;
+      }
+    });
+    window.addEventListener('mouseup', () => { isPanning = false; });
+
+    // Reset
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      transform = { x: 0, y: 0, k: 1 };
+      selectedTool = null;
+      updateSidebar();
+    });
+
+    // Toggle labels
+    document.getElementById('toggle-labels').addEventListener('click', function() {
+      showLabels = !showLabels;
+      this.textContent = showLabels ? 'Hide labels' : 'Show labels';
+    });
+
+    // Animation loop
+    let frame = 0;
+    function tick() {
+      if (frame < 300) simulate();
+      render();
+      frame++;
+      requestAnimationFrame(tick);
+    }
+    tick();
+  </script>
+</BaseLayout>

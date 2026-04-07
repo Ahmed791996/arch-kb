@@ -1,0 +1,349 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const paths = await getCollection('paths');
+const allTools = [...new Set(paths.flatMap((p) => p.data.tools))].sort();
+
+const difficultyLabel: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+};
+
+// Precompute path data for client
+const pathData = paths.map((p) => ({
+  id: p.id,
+  title: p.data.title,
+  goal: p.data.goal,
+  tools: p.data.tools,
+  difficulty: p.data.difficulty,
+  timeActual: p.data['time-actual'],
+  author: p.data.author,
+  aiSummary: p.data['ai-summary'],
+}));
+---
+
+<BaseLayout title="Remix">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-5xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-white">Path Remix</h1>
+        <p class="text-text-muted text-sm mt-1">Pick your tools. We'll assemble a custom workflow from existing paths.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Tool picker -->
+        <div class="lg:col-span-1">
+          <div class="border border-border-primary bg-bg-secondary p-5 sticky top-20">
+            <div class="text-xs text-text-muted uppercase tracking-wider mb-4">Select your tools</div>
+            <div class="flex flex-wrap gap-1.5 mb-6">
+              {allTools.map((tool) => (
+                <button
+                  class="tool-pick tag cursor-pointer hover:tag-active transition-all"
+                  data-tool={tool}
+                >
+                  {tool}
+                </button>
+              ))}
+            </div>
+
+            <div class="border-t border-border-primary pt-4 mt-2">
+              <div class="text-xs text-text-muted uppercase tracking-wider mb-3">Your pipeline</div>
+              <div id="pipeline-display" class="min-h-[40px]">
+                <div id="pipeline-empty" class="text-text-muted text-sm">Click tools above to build your pipeline</div>
+                <div id="pipeline-flow" class="hidden flex flex-wrap items-center gap-1"></div>
+              </div>
+            </div>
+
+            <div class="border-t border-border-primary pt-4 mt-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-xs text-text-muted uppercase tracking-wider">Difficulty</div>
+              </div>
+              <div class="flex gap-1">
+                <button class="diff-filter tag cursor-pointer tag-active" data-diff="all">All</button>
+                <button class="diff-filter tag cursor-pointer" data-diff="beginner">Beginner</button>
+                <button class="diff-filter tag cursor-pointer" data-diff="intermediate">Intermediate</button>
+                <button class="diff-filter tag cursor-pointer" data-diff="advanced">Advanced</button>
+              </div>
+            </div>
+
+            <button id="clear-remix" class="btn btn-sm w-full mt-5">Clear selection</button>
+          </div>
+        </div>
+
+        <!-- Right: Results -->
+        <div class="lg:col-span-2">
+          <!-- Match stats -->
+          <div id="remix-stats" class="border border-border-primary bg-bg-secondary p-4 mb-4 hidden">
+            <div class="flex items-center justify-between">
+              <div>
+                <span id="match-count" class="text-white font-bold text-lg">0</span>
+                <span class="text-text-muted text-sm ml-1">matching paths</span>
+              </div>
+              <div class="flex items-center gap-4 text-xs text-text-muted">
+                <div>
+                  <span id="tool-coverage" class="text-white font-semibold">0%</span> tool coverage
+                </div>
+                <div>
+                  <span id="selected-count" class="text-white font-semibold">0</span> tools selected
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Matching paths -->
+          <div id="remix-results" class="flex flex-col gap-3">
+            <div id="remix-empty" class="border border-border-primary bg-bg-secondary p-12 text-center">
+              <div class="text-text-muted text-lg mb-2">Select tools to find matching paths</div>
+              <p class="text-text-muted text-xs max-w-md mx-auto">Pick the tools you want to use (or already have). We'll find paths that use those tools and show you how they fit together.</p>
+            </div>
+          </div>
+
+          <!-- Generated remix -->
+          <div id="remix-output" class="hidden mt-6">
+            <div class="border border-border-primary bg-bg-secondary">
+              <div class="px-5 py-3 border-b border-border-primary flex items-center justify-between">
+                <div class="text-xs text-text-muted uppercase tracking-wider">Your remixed workflow</div>
+                <div class="flex gap-2">
+                  <button id="copy-remix" class="btn btn-sm">Copy as prompt</button>
+                  <button id="download-remix" class="btn btn-sm">Download .path.md</button>
+                </div>
+              </div>
+              <div id="remix-content" class="p-5 prose text-sm"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script is:inline define:vars={{ pathData, allTools, difficultyLabel }}>
+    let selectedTools = [];
+    let diffFilter = 'all';
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    // Tool selection
+    document.querySelectorAll('.tool-pick').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tool = btn.dataset.tool;
+        const idx = selectedTools.indexOf(tool);
+        if (idx >= 0) {
+          selectedTools.splice(idx, 1);
+          btn.classList.remove('tag-active');
+        } else {
+          selectedTools.push(tool);
+          btn.classList.add('tag-active');
+        }
+        updateRemix();
+      });
+    });
+
+    // Difficulty filter
+    document.querySelectorAll('.diff-filter').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.diff-filter').forEach(b => b.classList.remove('tag-active'));
+        btn.classList.add('tag-active');
+        diffFilter = btn.dataset.diff;
+        updateRemix();
+      });
+    });
+
+    // Clear
+    document.getElementById('clear-remix').addEventListener('click', () => {
+      selectedTools = [];
+      document.querySelectorAll('.tool-pick').forEach(b => b.classList.remove('tag-active'));
+      diffFilter = 'all';
+      document.querySelectorAll('.diff-filter').forEach(b => b.classList.remove('tag-active'));
+      document.querySelector('.diff-filter[data-diff="all"]').classList.add('tag-active');
+      updateRemix();
+    });
+
+    function updateRemix() {
+      const pipelineEmpty = document.getElementById('pipeline-empty');
+      const pipelineFlow = document.getElementById('pipeline-flow');
+      const remixStats = document.getElementById('remix-stats');
+      const remixResults = document.getElementById('remix-results');
+      const remixEmpty = document.getElementById('remix-empty');
+      const remixOutput = document.getElementById('remix-output');
+
+      // Update pipeline display
+      if (selectedTools.length === 0) {
+        pipelineEmpty.classList.remove('hidden');
+        pipelineFlow.classList.add('hidden');
+        remixStats.classList.add('hidden');
+        remixOutput.classList.add('hidden');
+        remixResults.innerHTML = `<div id="remix-empty" class="border border-border-primary bg-bg-secondary p-12 text-center">
+          <div class="text-text-muted text-lg mb-2">Select tools to find matching paths</div>
+          <p class="text-text-muted text-xs max-w-md mx-auto">Pick the tools you want to use (or already have). We'll find paths that use those tools and show you how they fit together.</p>
+        </div>`;
+        return;
+      }
+
+      pipelineEmpty.classList.add('hidden');
+      pipelineFlow.classList.remove('hidden');
+      pipelineFlow.innerHTML = selectedTools.map((t, i) =>
+        `<span class="flow-node">${t}</span>${i < selectedTools.length - 1 ? '<span class="flow-arrow">→</span>' : ''}`
+      ).join('');
+
+      // Find matching paths
+      let matches = pathData.map(p => {
+        const overlap = p.tools.filter(t => selectedTools.includes(t));
+        const score = overlap.length;
+        return { ...p, overlap, score, coverage: Math.round((overlap.length / selectedTools.length) * 100) };
+      }).filter(m => m.score > 0);
+
+      if (diffFilter !== 'all') {
+        matches = matches.filter(m => m.difficulty === diffFilter);
+      }
+
+      matches.sort((a, b) => b.score - a.score);
+
+      // Stats
+      remixStats.classList.remove('hidden');
+      document.getElementById('match-count').textContent = matches.length;
+      document.getElementById('selected-count').textContent = selectedTools.length;
+
+      const coveredTools = [...new Set(matches.flatMap(m => m.overlap))];
+      const coverage = Math.round((coveredTools.length / selectedTools.length) * 100);
+      document.getElementById('tool-coverage').textContent = coverage + '%';
+
+      // Render matches
+      if (matches.length === 0) {
+        remixResults.innerHTML = `<div class="border border-border-primary bg-bg-secondary p-8 text-center">
+          <div class="text-text-muted text-sm">No paths match your tool selection${diffFilter !== 'all' ? ' at this difficulty level' : ''}.</div>
+          <p class="text-text-muted text-xs mt-1">Try selecting fewer tools or changing the difficulty filter.</p>
+        </div>`;
+        remixOutput.classList.add('hidden');
+        return;
+      }
+
+      remixResults.innerHTML = matches.map(m => `
+        <div class="border border-border-primary bg-bg-secondary hover:border-border-secondary transition-all">
+          <a href="/paths/${m.id}" class="block p-5">
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="tag text-[0.65rem]">${difficultyLabel[m.difficulty]}</span>
+                  <span class="tag text-[0.65rem]">${m.timeActual}</span>
+                  <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border ${m.coverage === 100 ? 'border-border-active text-white' : 'border-border-primary text-text-muted'}">${m.coverage}% match</span>
+                </div>
+                <h3 class="text-white font-semibold text-sm">${m.title}</h3>
+                <p class="text-text-muted text-xs mt-1">${m.goal}</p>
+                <div class="flex flex-wrap gap-1 mt-3">
+                  ${m.tools.map(t => {
+                    const isSelected = selectedTools.includes(t);
+                    return `<span class="text-[0.6rem] px-1.5 py-0.5 border ${isSelected ? 'text-white bg-bg-tertiary border-border-active' : 'text-text-muted bg-bg-primary border-border-primary'}">${t}</span>`;
+                  }).join('')}
+                </div>
+              </div>
+              <div class="text-xs text-text-muted shrink-0 text-right">
+                <div>${m.author}</div>
+                <div class="mt-1">${m.overlap.length}/${selectedTools.length} tools</div>
+              </div>
+            </div>
+          </a>
+        </div>
+      `).join('');
+
+      // Generate remix output
+      remixOutput.classList.remove('hidden');
+      const topMatches = matches.slice(0, 3);
+      const remixMd = generateRemixMarkdown(topMatches);
+      document.getElementById('remix-content').innerHTML = remixMd;
+    }
+
+    function generateRemixMarkdown(matches) {
+      const lines = [];
+      lines.push(`<h2>Remixed Workflow</h2>`);
+      lines.push(`<p class="text-text-secondary">Based on <strong class="text-white">${selectedTools.join(' → ')}</strong></p>`);
+      lines.push(`<p class="text-text-muted text-xs">Assembled from ${matches.length} matching path${matches.length !== 1 ? 's' : ''} in the registry.</p>`);
+
+      matches.forEach((m, i) => {
+        lines.push(`<h3>Source ${i + 1}: ${m.title}</h3>`);
+        lines.push(`<p class="text-text-muted text-xs">By ${m.author} · ${m.difficulty} · ${m.timeActual} · <a href="/paths/${m.id}" class="text-text-secondary hover:text-white underline underline-offset-2">View full path</a></p>`);
+        lines.push(`<p class="text-text-secondary text-sm">${m.aiSummary}</p>`);
+        lines.push(`<div class="flex flex-wrap gap-1 my-2">${m.overlap.map(t => `<span class="text-[0.6rem] px-1.5 py-0.5 text-white bg-bg-tertiary border border-border-active">${t}</span>`).join('')}</div>`);
+      });
+
+      lines.push(`<h3>Next steps</h3>`);
+      lines.push(`<ul>`);
+      lines.push(`<li>Open each source path and read the "For AI Agents" section</li>`);
+      lines.push(`<li>Download the context pack: select paths above, then use <a href="/collections" class="text-text-secondary hover:text-white underline underline-offset-2">Collections</a></li>`);
+      lines.push(`<li>Or generate an agent prompt from any path page to get started immediately</li>`);
+      lines.push(`</ul>`);
+
+      return lines.join('\n');
+    }
+
+    // Copy remix as prompt
+    document.getElementById('copy-remix')?.addEventListener('click', () => {
+      const prompt = `I want to build a workflow using these tools: ${selectedTools.join(', ')}
+
+I found these relevant paths on arch·kb:
+
+${pathData.filter(p => p.tools.some(t => selectedTools.includes(t))).slice(0, 3).map(p =>
+  `- "${p.title}" by ${p.author} (${window.location.origin}/raw/${p.id})`
+).join('\n')}
+
+Please read the raw markdown at those URLs and help me combine the relevant steps into a single workflow for my project. Ask me about my specific situation before starting.`;
+
+      navigator.clipboard.writeText(prompt).then(() => showToast('Remix prompt copied'));
+    });
+
+    // Download remix as .path.md
+    document.getElementById('download-remix')?.addEventListener('click', () => {
+      const matches = pathData.filter(p => p.tools.some(t => selectedTools.includes(t))).slice(0, 3);
+      const md = `---
+title: "Remixed: ${selectedTools.join(' → ')}"
+goal: "Custom workflow combining ${selectedTools.length} tools"
+tools: [${selectedTools.map(t => `"${t}"`).join(', ')}]
+time-actual: "TBD"
+difficulty: intermediate
+result-quality: draft
+author: "Remixed from arch·kb"
+updated: "${new Date().toISOString().slice(0, 7)}"
+ai-summary: >
+  Remixed workflow assembling steps from ${matches.length} existing paths.
+  Tools: ${selectedTools.join(', ')}.
+---
+
+## Goal
+
+Custom workflow using ${selectedTools.join(', ')}.
+
+## Source Paths
+
+${matches.map((m, i) => `${i + 1}. **${m.title}** by ${m.author} — /paths/${m.id}`).join('\n')}
+
+## Path
+
+_Fill in steps from the source paths above, adapting to your project._
+
+## For AI Agents Replicating This Path
+
+Read the source paths listed above for full step-by-step instructions.
+The user has selected these tools: ${selectedTools.join(', ')}.
+Focus only on steps that use these tools.
+`;
+      const blob = new Blob([md], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'remix-' + selectedTools.join('-').toLowerCase().replace(/[^a-z0-9-]+/g, '') + '.path.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Remix downloaded');
+    });
+
+    // Init
+    updateRemix();
+  </script>
+</BaseLayout>

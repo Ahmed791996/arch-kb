@@ -1,0 +1,593 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Settings">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex flex-col md:flex-row gap-8">
+
+        <!-- Sidebar -->
+        <aside class="md:w-56 shrink-0">
+          <nav class="sticky top-20 flex flex-col gap-0.5">
+            <div class="text-xs text-text-muted uppercase tracking-wider mb-2 px-3">Settings</div>
+            <button class="settings-tab text-left px-3 py-2 text-sm text-white bg-bg-tertiary transition-all" data-tab="profile">Profile</button>
+            <button class="settings-tab text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all" data-tab="account">Account</button>
+            <button class="settings-tab text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all" data-tab="appearance">Appearance</button>
+            <button class="settings-tab text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all" data-tab="privacy">Privacy</button>
+            <button class="settings-tab text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all" data-tab="notifications">Notifications</button>
+            <button class="settings-tab text-left px-3 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all" data-tab="developer">Developer</button>
+          </nav>
+        </aside>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <!-- Login gate -->
+          <div id="settings-gate" class="border border-border-primary bg-bg-secondary p-12 text-center">
+            <h2 class="text-white font-bold text-lg mb-2">Log in to access settings</h2>
+            <p class="text-text-muted text-sm mb-4">You need to be logged in to manage your settings.</p>
+            <a href="/login" class="btn btn-primary">Log in</a>
+          </div>
+
+          <div id="settings-content" class="hidden">
+            <!-- Profile Tab -->
+            <div id="tab-profile" class="settings-panel">
+              <h2 class="text-lg font-bold text-white mb-1">Profile</h2>
+              <p class="text-text-muted text-sm mb-6">Your public profile information</p>
+
+              <div class="flex flex-col gap-6">
+                <!-- Avatar -->
+                <div class="flex items-start gap-6">
+                  <div>
+                    <div id="avatar-preview" class="w-20 h-20 bg-bg-tertiary border border-border-primary flex items-center justify-center text-white font-bold text-2xl">
+                    </div>
+                  </div>
+                  <div class="flex-1">
+                    <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Avatar URL</label>
+                    <input type="text" id="setting-avatar" class="input" placeholder="https://example.com/your-photo.jpg" />
+                    <p class="text-text-muted text-xs mt-1">Paste a URL to your profile image. Supports any image URL.</p>
+                  </div>
+                </div>
+
+                <!-- Display name -->
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Display name</label>
+                  <input type="text" id="setting-name" class="input max-w-sm" placeholder="Your Name" />
+                  <p class="text-text-muted text-xs mt-1">Your name as it appears on your profile and paths.</p>
+                </div>
+
+                <!-- Bio -->
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Bio</label>
+                  <textarea id="setting-bio" class="input" placeholder="Tell people about yourself and your work..."></textarea>
+                  <p class="text-text-muted text-xs mt-1">A short description that appears on your profile page.</p>
+                </div>
+
+                <!-- Role -->
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Role</label>
+                  <input type="text" id="setting-role" class="input max-w-sm" placeholder="e.g., Designer, Developer, Student" />
+                </div>
+
+                <!-- Affiliation -->
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Affiliation / Organization</label>
+                  <input type="text" id="setting-affiliation" class="input max-w-sm" placeholder="e.g., Company, University, Studio" />
+                </div>
+
+                <!-- Social links -->
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-3">Social links</label>
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-text-muted text-xs w-20 shrink-0">Website</span>
+                      <input type="text" id="setting-website" class="input" placeholder="https://yoursite.com" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-text-muted text-xs w-20 shrink-0">GitHub</span>
+                      <input type="text" id="setting-github" class="input" placeholder="username" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-text-muted text-xs w-20 shrink-0">Twitter / X</span>
+                      <input type="text" id="setting-twitter" class="input" placeholder="@username" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-text-muted text-xs w-20 shrink-0">LinkedIn</span>
+                      <input type="text" id="setting-linkedin" class="input" placeholder="username" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pinned paths -->
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Pinned paths</label>
+                  <p class="text-text-muted text-xs mb-2">Select up to 4 paths to pin to the top of your profile.</p>
+                  <div id="pinned-paths-list" class="flex flex-col gap-1"></div>
+                </div>
+
+                <button id="save-profile" class="btn btn-primary w-fit">Save profile</button>
+              </div>
+            </div>
+
+            <!-- Account Tab -->
+            <div id="tab-account" class="settings-panel hidden">
+              <h2 class="text-lg font-bold text-white mb-1">Account</h2>
+              <p class="text-text-muted text-sm mb-6">Manage your account settings</p>
+
+              <div class="flex flex-col gap-6">
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Username</label>
+                  <input type="text" id="setting-username" class="input max-w-sm" disabled />
+                  <p class="text-text-muted text-xs mt-1">Your unique username. Cannot be changed.</p>
+                </div>
+
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Email</label>
+                  <input type="email" id="setting-email" class="input max-w-sm" placeholder="you@example.com" />
+                  <p class="text-text-muted text-xs mt-1">Used for notifications. Not displayed publicly.</p>
+                </div>
+
+                <div class="border-t border-border-primary pt-6">
+                  <h3 class="text-white font-semibold text-sm mb-3">Sessions</h3>
+                  <div class="border border-border-primary bg-bg-secondary p-4 flex items-center justify-between">
+                    <div>
+                      <div class="text-sm text-white">Current session</div>
+                      <div class="text-xs text-text-muted mt-0.5">Logged in now</div>
+                    </div>
+                    <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">Active</span>
+                  </div>
+                </div>
+
+                <div class="border-t border-border-primary pt-6">
+                  <h3 class="text-white font-semibold text-sm mb-1 text-red-400">Danger zone</h3>
+                  <p class="text-text-muted text-xs mb-3">These actions are irreversible.</p>
+                  <div class="flex gap-2">
+                    <button id="export-data" class="btn btn-sm">Export my data</button>
+                    <button id="delete-account" class="btn btn-sm" style="border-color: #ef4444; color: #ef4444;">Delete account</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance Tab -->
+            <div id="tab-appearance" class="settings-panel hidden">
+              <h2 class="text-lg font-bold text-white mb-1">Appearance</h2>
+              <p class="text-text-muted text-sm mb-6">Customize how arch·kb looks</p>
+
+              <div class="flex flex-col gap-6">
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-3">Theme</label>
+                  <div class="flex gap-3">
+                    <button class="theme-option border-2 border-border-primary bg-[#0a0a0a] p-4 w-32 text-center hover:border-border-active transition-all" data-theme="dark">
+                      <div class="text-white text-sm font-semibold mb-1">Dark</div>
+                      <div class="text-text-muted text-xs">Default</div>
+                    </button>
+                    <button class="theme-option border-2 border-border-primary bg-[#ffffff] p-4 w-32 text-center hover:border-border-active transition-all" data-theme="light">
+                      <div class="text-[#1a1a1a] text-sm font-semibold mb-1">Light</div>
+                      <div class="text-[#888] text-xs">Bright</div>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-3">Default view</label>
+                  <div class="flex gap-2">
+                    <button class="view-option btn btn-sm" data-view="thumb">Thumbnails</button>
+                    <button class="view-option btn btn-sm" data-view="list">List</button>
+                  </div>
+                  <p class="text-text-muted text-xs mt-1">Default view for path listings.</p>
+                </div>
+
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Font size</label>
+                  <select id="setting-fontsize" class="input max-w-xs">
+                    <option value="14">Default (14px)</option>
+                    <option value="13">Compact (13px)</option>
+                    <option value="15">Comfortable (15px)</option>
+                    <option value="16">Large (16px)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Privacy Tab -->
+            <div id="tab-privacy" class="settings-panel hidden">
+              <h2 class="text-lg font-bold text-white mb-1">Privacy</h2>
+              <p class="text-text-muted text-sm mb-6">Control what others can see</p>
+
+              <div class="flex flex-col gap-4">
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">Profile visibility</div>
+                    <div class="text-xs text-text-muted mt-0.5">Make your profile visible to everyone</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="privacy-profile" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">Show email on profile</div>
+                    <div class="text-xs text-text-muted mt-0.5">Display your email publicly</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="privacy-email" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">Show activity in feed</div>
+                    <div class="text-xs text-text-muted mt-0.5">Your bookmarks and upvotes appear in the activity feed</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="privacy-activity" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">Show follower count</div>
+                    <div class="text-xs text-text-muted mt-0.5">Display how many people follow you</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="privacy-followers" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <h3 class="text-white font-semibold text-sm mt-4">Default path visibility</h3>
+                <p class="text-text-muted text-xs mb-2">Choose the default visibility for new paths you publish.</p>
+                <div class="flex gap-2">
+                  <button class="vis-option btn btn-sm" data-vis="public">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c-2 2-2 10 0 12M8 2c2 2 2 10 0 12"/></svg>
+                    Public
+                  </button>
+                  <button class="vis-option btn btn-sm" data-vis="unlisted">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+                    Unlisted
+                  </button>
+                  <button class="vis-option btn btn-sm" data-vis="private">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="10" height="7" rx="1"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>
+                    Private
+                  </button>
+                </div>
+                <div class="text-text-muted text-xs mt-2">
+                  <strong class="text-text-secondary">Public</strong> — anyone can find and view. <strong class="text-text-secondary">Unlisted</strong> — only accessible via direct link. <strong class="text-text-secondary">Private</strong> — only you can see it.
+                </div>
+
+                <button id="save-privacy" class="btn btn-primary w-fit mt-4">Save privacy settings</button>
+              </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="tab-notifications" class="settings-panel hidden">
+              <h2 class="text-lg font-bold text-white mb-1">Notifications</h2>
+              <p class="text-text-muted text-sm mb-6">Choose what you get notified about</p>
+
+              <div class="flex flex-col gap-4">
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">New comments on your paths</div>
+                    <div class="text-xs text-text-muted mt-0.5">Someone leaves a note on one of your paths</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-comments" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">New followers</div>
+                    <div class="text-xs text-text-muted mt-0.5">Someone follows your profile</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-followers" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">Path milestones</div>
+                    <div class="text-xs text-text-muted mt-0.5">Your path hits 10, 50, 100 upvotes</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-milestones" checked />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div class="border border-border-primary bg-bg-secondary p-5 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm text-white">Weekly digest</div>
+                    <div class="text-xs text-text-muted mt-0.5">Summary of trending paths and platform activity</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-digest" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+
+                <button id="save-notifs" class="btn btn-primary w-fit mt-2">Save notification preferences</button>
+              </div>
+            </div>
+
+            <!-- Developer Tab -->
+            <div id="tab-developer" class="settings-panel hidden">
+              <h2 class="text-lg font-bold text-white mb-1">Developer</h2>
+              <p class="text-text-muted text-sm mb-6">API access and integrations</p>
+
+              <div class="flex flex-col gap-6">
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">API token</label>
+                  <div class="flex gap-2">
+                    <input type="text" id="api-token" class="input font-mono text-xs" value="" readonly placeholder="No token generated" />
+                    <button id="gen-token" class="btn btn-sm shrink-0">Generate</button>
+                    <button id="copy-token" class="btn btn-sm shrink-0">Copy</button>
+                  </div>
+                  <p class="text-text-muted text-xs mt-1">Use this token to publish paths via the API. Keep it secret.</p>
+                </div>
+
+                <div>
+                  <label class="text-xs text-text-muted uppercase tracking-wider block mb-2">Webhook URL</label>
+                  <input type="text" id="setting-webhook" class="input" placeholder="https://your-server.com/webhook" />
+                  <p class="text-text-muted text-xs mt-1">We'll POST to this URL when someone comments on or forks your paths.</p>
+                </div>
+
+                <div class="border-t border-border-primary pt-6">
+                  <h3 class="text-white font-semibold text-sm mb-3">Connected apps</h3>
+                  <div class="border border-border-primary bg-bg-secondary p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-bg-tertiary border border-border-primary flex items-center justify-center text-xs font-mono text-text-muted">GH</div>
+                      <div>
+                        <div class="text-sm text-white">GitHub</div>
+                        <div class="text-xs text-text-muted">Auto-publish paths from a GitHub repo</div>
+                      </div>
+                    </div>
+                    <button id="connect-github" class="btn btn-sm">Connect</button>
+                  </div>
+                  <div class="border border-border-primary border-t-0 bg-bg-secondary p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-bg-tertiary border border-border-primary flex items-center justify-center text-xs font-mono text-text-muted">CC</div>
+                      <div>
+                        <div class="text-sm text-white">Claude Code</div>
+                        <div class="text-xs text-text-muted">Publish paths directly from Claude Code</div>
+                      </div>
+                    </div>
+                    <a href="/docs#claude-code" class="btn btn-sm">Setup guide</a>
+                  </div>
+                </div>
+
+                <button id="save-developer" class="btn btn-primary w-fit">Save developer settings</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script is:inline>
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    // Auth gate
+    const user = JSON.parse(localStorage.getItem('archkb_user') || 'null');
+    if (user) {
+      document.getElementById('settings-gate').classList.add('hidden');
+      document.getElementById('settings-content').classList.remove('hidden');
+    }
+
+    // Load settings
+    const settings = JSON.parse(localStorage.getItem('archkb_settings') || '{}');
+
+    function loadSettings() {
+      if (!user) return;
+      document.getElementById('setting-name').value = settings.displayName || user.displayName || '';
+      document.getElementById('setting-username').value = user.username || '';
+      document.getElementById('setting-bio').value = settings.bio || '';
+      document.getElementById('setting-role').value = settings.role || '';
+      document.getElementById('setting-affiliation').value = settings.affiliation || '';
+      document.getElementById('setting-email').value = settings.email || user.email || '';
+      document.getElementById('setting-avatar').value = settings.avatar || user.photo || '';
+      document.getElementById('setting-website').value = settings.website || '';
+      document.getElementById('setting-github').value = settings.github || '';
+      document.getElementById('setting-twitter').value = settings.twitter || '';
+      document.getElementById('setting-linkedin').value = settings.linkedin || '';
+      document.getElementById('setting-webhook').value = settings.webhook || '';
+      document.getElementById('api-token').value = settings.apiToken || '';
+
+      // Avatar preview
+      const avatar = document.getElementById('avatar-preview');
+      if (settings.avatar) {
+        avatar.innerHTML = `<img src="${settings.avatar}" class="w-full h-full object-cover" />`;
+      } else {
+        avatar.textContent = (user.displayName || '?').split(' ').map(n => n[0]).join('');
+      }
+
+      // Privacy
+      document.getElementById('privacy-profile').checked = settings.profilePublic !== false;
+      document.getElementById('privacy-email').checked = settings.emailPublic === true;
+      document.getElementById('privacy-activity').checked = settings.activityPublic !== false;
+      document.getElementById('privacy-followers').checked = settings.followersPublic !== false;
+
+      // Default visibility
+      document.querySelectorAll('.vis-option').forEach(btn => {
+        btn.classList.toggle('btn-primary', btn.dataset.vis === (settings.defaultVisibility || 'public'));
+      });
+
+      // Notifications
+      document.getElementById('notif-comments').checked = settings.notifComments !== false;
+      document.getElementById('notif-followers').checked = settings.notifFollowers !== false;
+      document.getElementById('notif-milestones').checked = settings.notifMilestones !== false;
+      document.getElementById('notif-digest').checked = settings.notifDigest === true;
+
+      // Theme
+      const currentTheme = localStorage.getItem('archkb_theme') || 'dark';
+      document.querySelectorAll('.theme-option').forEach(btn => {
+        btn.classList.toggle('border-white', btn.dataset.theme === currentTheme);
+      });
+
+      // View
+      const currentView = localStorage.getItem('archkb_view') || 'thumb';
+      document.querySelectorAll('.view-option').forEach(btn => {
+        btn.classList.toggle('btn-primary', btn.dataset.view === currentView);
+      });
+    }
+    loadSettings();
+
+    // Tabs
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.settings-tab').forEach(t => {
+          t.classList.remove('text-white', 'bg-bg-tertiary');
+          t.classList.add('text-text-secondary');
+        });
+        tab.classList.remove('text-text-secondary');
+        tab.classList.add('text-white', 'bg-bg-tertiary');
+        document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById('tab-' + tab.dataset.tab)?.classList.remove('hidden');
+      });
+    });
+
+    // Save profile
+    document.getElementById('save-profile')?.addEventListener('click', () => {
+      settings.displayName = document.getElementById('setting-name').value;
+      settings.bio = document.getElementById('setting-bio').value;
+      settings.role = document.getElementById('setting-role').value;
+      settings.affiliation = document.getElementById('setting-affiliation').value;
+      settings.avatar = document.getElementById('setting-avatar').value;
+      settings.website = document.getElementById('setting-website').value;
+      settings.github = document.getElementById('setting-github').value;
+      settings.twitter = document.getElementById('setting-twitter').value;
+      settings.linkedin = document.getElementById('setting-linkedin').value;
+
+      // Update user object too
+      if (settings.displayName) user.displayName = settings.displayName;
+      if (settings.avatar) user.photo = settings.avatar;
+      localStorage.setItem('archkb_user', JSON.stringify(user));
+      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      showToast('Profile saved');
+      loadSettings();
+    });
+
+    // Save privacy
+    document.getElementById('save-privacy')?.addEventListener('click', () => {
+      settings.profilePublic = document.getElementById('privacy-profile').checked;
+      settings.emailPublic = document.getElementById('privacy-email').checked;
+      settings.activityPublic = document.getElementById('privacy-activity').checked;
+      settings.followersPublic = document.getElementById('privacy-followers').checked;
+      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      showToast('Privacy settings saved');
+    });
+
+    // Visibility buttons
+    document.querySelectorAll('.vis-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.vis-option').forEach(b => b.classList.remove('btn-primary'));
+        btn.classList.add('btn-primary');
+        settings.defaultVisibility = btn.dataset.vis;
+      });
+    });
+
+    // Save notifications
+    document.getElementById('save-notifs')?.addEventListener('click', () => {
+      settings.notifComments = document.getElementById('notif-comments').checked;
+      settings.notifFollowers = document.getElementById('notif-followers').checked;
+      settings.notifMilestones = document.getElementById('notif-milestones').checked;
+      settings.notifDigest = document.getElementById('notif-digest').checked;
+      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      showToast('Notification preferences saved');
+    });
+
+    // Theme
+    document.querySelectorAll('.theme-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.theme-option').forEach(b => b.classList.remove('border-white'));
+        btn.classList.add('border-white');
+        document.documentElement.setAttribute('data-theme', btn.dataset.theme);
+        localStorage.setItem('archkb_theme', btn.dataset.theme);
+      });
+    });
+
+    // View
+    document.querySelectorAll('.view-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-option').forEach(b => b.classList.remove('btn-primary'));
+        btn.classList.add('btn-primary');
+        localStorage.setItem('archkb_view', btn.dataset.view);
+      });
+    });
+
+    // Generate API token
+    document.getElementById('gen-token')?.addEventListener('click', () => {
+      const token = 'akb_' + Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b => b.toString(16).padStart(2, '0')).join('');
+      document.getElementById('api-token').value = token;
+      settings.apiToken = token;
+      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      showToast('API token generated');
+    });
+
+    // Copy token
+    document.getElementById('copy-token')?.addEventListener('click', () => {
+      const token = document.getElementById('api-token').value;
+      if (token) {
+        navigator.clipboard.writeText(token).then(() => showToast('Token copied'));
+      }
+    });
+
+    // Save developer
+    document.getElementById('save-developer')?.addEventListener('click', () => {
+      settings.webhook = document.getElementById('setting-webhook').value;
+      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      showToast('Developer settings saved');
+    });
+
+    // Export data
+    document.getElementById('export-data')?.addEventListener('click', () => {
+      const data = {
+        user,
+        settings,
+        bookmarks: JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]'),
+        upvotes: JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]'),
+        following: JSON.parse(localStorage.getItem('archkb_following') || '[]'),
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'archkb-export.json';
+      a.click();
+      showToast('Data exported');
+    });
+
+    // Delete account
+    document.getElementById('delete-account')?.addEventListener('click', () => {
+      if (confirm('Are you sure? This will clear all your local data. This cannot be undone.')) {
+        ['archkb_user', 'archkb_settings', 'archkb_bookmarks', 'archkb_user_upvotes', 'archkb_upvotes', 'archkb_following', 'archkb_editor_draft', 'archkb_notifs'].forEach(k => localStorage.removeItem(k));
+        // Also remove comment/built keys
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('archkb_')) localStorage.removeItem(key);
+        }
+        window.location.href = '/';
+      }
+    });
+
+    // Connect GitHub
+    document.getElementById('connect-github')?.addEventListener('click', () => {
+      showToast('GitHub integration coming soon');
+    });
+  </script>
+</BaseLayout>

@@ -38,6 +38,10 @@ export async function buildSearchIndex() {
     { type: 'page', title: 'Leaderboard', description: 'Top contributors and paths', tags: 'leaderboard ranking top', url: '/leaderboard' },
     { type: 'page', title: 'Activity Feed', description: 'Recent activity across the platform', tags: 'feed activity recent', url: '/feed' },
     { type: 'page', title: 'Compare Tools', description: 'Side-by-side tool comparisons', tags: 'compare comparison versus vs', url: '/compare' },
+    { type: 'page', title: 'Tool Graph', description: 'Interactive visualization of the tool ecosystem', tags: 'graph visualization network tools connections ecosystem', url: '/graph' },
+    { type: 'page', title: 'Path Remix', description: 'Build custom workflows by selecting tools', tags: 'remix builder compose custom workflow tools mix', url: '/remix' },
+    { type: 'page', title: 'Agent Protocol', description: 'How AI agents discover and use this registry', tags: 'agent protocol api llm ai machine readable discovery', url: '/agent' },
+    { type: 'page', title: 'Documentation', description: 'How to write and publish .path.md files with Claude Code', tags: 'docs documentation guide claude code publish write how to', url: '/docs' },
   ];
 
   return [...pathItems, ...toolItems, ...userItems, ...pageItems];

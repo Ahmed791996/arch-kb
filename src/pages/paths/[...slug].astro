@@ -44,7 +44,23 @@ const toolFlow = entry.data.tools;
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data['ai-summary']}>
-  <div class="max-w-3xl mx-auto px-6 py-12">
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress" class="fixed top-0 left-0 h-[2px] bg-white z-[60] transition-none" style="width: 0%"></div>
+
+  <div class="max-w-3xl mx-auto px-6 py-12 relative">
+    <!-- Floating Table of Contents -->
+    <div id="toc-float" class="hidden xl:block fixed right-8 top-24 w-56 z-30">
+      <div class="border border-border-primary bg-bg-secondary p-4">
+        <div class="text-xs text-text-muted uppercase tracking-wider mb-3 flex items-center justify-between">
+          <span>On this page</span>
+          <button id="toc-collapse" class="text-text-muted hover:text-white transition-colors">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+          </button>
+        </div>
+        <nav id="toc-nav" class="flex flex-col gap-0.5 max-h-[60vh] overflow-y-auto"></nav>
+      </div>
+    </div>
+
     <!-- Header -->
     <header class="mb-8 pb-6 border-b border-border-primary">
       <div class="flex items-start justify-between gap-4">
@@ -112,6 +128,9 @@ const toolFlow = entry.data.tools;
         </button>
         <button id="ask-ai-btn" class="btn btn-sm btn-primary" data-title={entry.data.title} data-summary={entry.data['ai-summary']} data-url={pathUrl} data-author={entry.data.author} data-tools={entry.data.tools.join(', ')}>
           Ask AI about this path
+        </button>
+        <button id="agent-prompt-btn" class="btn btn-sm" data-title={entry.data.title} data-summary={entry.data['ai-summary']} data-slug={entry.id} data-author={entry.data.author} data-tools={entry.data.tools.join(', ')} data-difficulty={entry.data.difficulty} data-time={entry.data['time-actual']}>
+          Generate agent prompt
         </button>
       </div>
     </header>
@@ -244,6 +263,48 @@ const toolFlow = entry.data.tools;
   <!-- Toast -->
   <div id="toast" class="toast"></div>
 
+  <!-- Multi-Agent Prompt Generator Modal -->
+  <div id="agent-modal" class="fixed inset-0 z-50 hidden">
+    <div id="agent-modal-backdrop" class="absolute inset-0 bg-black/60"></div>
+    <div class="relative max-w-2xl mx-auto mt-[8vh] max-h-[84vh] overflow-y-auto">
+      <div class="border border-border-secondary bg-bg-primary shadow-2xl">
+        <div class="px-6 py-4 border-b border-border-primary flex items-center justify-between">
+          <div>
+            <h2 class="text-white font-bold text-lg">Generate agent prompt</h2>
+            <p class="text-text-muted text-xs mt-0.5">Optimized for each AI agent's strengths</p>
+          </div>
+          <button id="agent-modal-close" class="text-text-muted hover:text-white text-lg">x</button>
+        </div>
+
+        <!-- Agent tabs -->
+        <div class="flex border-b border-border-primary">
+          <button class="agent-tab px-5 py-3 text-sm font-medium text-white border-b-2 border-white" data-agent="claude">Claude</button>
+          <button class="agent-tab px-5 py-3 text-sm font-medium text-text-muted hover:text-white border-b-2 border-transparent" data-agent="gpt">ChatGPT</button>
+          <button class="agent-tab px-5 py-3 text-sm font-medium text-text-muted hover:text-white border-b-2 border-transparent" data-agent="gemini">Gemini</button>
+        </div>
+
+        <!-- Prompt output -->
+        <div class="p-6">
+          <div id="agent-prompt-info" class="text-xs text-text-muted mb-3"></div>
+          <div class="relative group">
+            <pre id="agent-prompt-output" class="bg-bg-secondary border border-border-primary p-4 text-sm font-mono text-text-primary overflow-x-auto whitespace-pre-wrap max-h-[50vh] overflow-y-auto"></pre>
+            <button id="agent-prompt-copy" class="absolute top-2 right-2 px-3 py-1.5 text-xs bg-bg-tertiary border border-border-primary text-text-muted hover:text-white hover:border-border-active transition-all">
+              Copy prompt
+            </button>
+          </div>
+          <div class="flex items-center justify-between mt-4">
+            <div class="text-xs text-text-muted">
+              Paste this prompt directly into your AI assistant
+            </div>
+            <div class="flex gap-2">
+              <button id="agent-prompt-download" class="btn btn-sm">Download .txt</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script is:inline>
     // ── Toast ──
     function showToast(msg) {
@@ -274,8 +335,139 @@ const toolFlow = entry.data.tools;
     // ── Ask AI ──
     document.getElementById('ask-ai-btn')?.addEventListener('click', function() {
       const d = this.dataset;
-      const prompt = `I want to replicate this architecture + AI workflow:\n\nTitle: ${d.title}\nSummary: ${d.summary}\nTools used: ${d.tools}\nFull path: ${window.location.origin}${d.url}\nRaw markdown (feed this to your context): ${window.location.origin}/raw/${window.location.pathname.split('/').pop()}\n\nPlease read the raw markdown at that URL and guide me through the workflow step by step. Adapt it to my specific situation — ask me what I already have before starting.`;
+      const prompt = `I want to replicate this workflow:\n\nTitle: ${d.title}\nSummary: ${d.summary}\nTools used: ${d.tools}\nFull path: ${window.location.origin}${d.url}\nRaw markdown (feed this to your context): ${window.location.origin}/raw/${window.location.pathname.split('/').pop()}\n\nPlease read the raw markdown at that URL and guide me through the workflow step by step. Adapt it to my specific situation — ask me what I already have before starting.`;
       copyToClipboard(prompt, 'AI prompt copied — paste it into Claude or ChatGPT');
+    });
+
+    // ── Agent Prompt Generator Modal ──
+    const agentModal = document.getElementById('agent-modal');
+    const agentModalBackdrop = document.getElementById('agent-modal-backdrop');
+    const agentPromptOutput = document.getElementById('agent-prompt-output');
+    const agentPromptInfo = document.getElementById('agent-prompt-info');
+    let currentAgent = 'claude';
+
+    function openAgentModal() { agentModal.classList.remove('hidden'); generateAgentPrompt(); }
+    function closeAgentModal() { agentModal.classList.add('hidden'); }
+
+    document.getElementById('agent-prompt-btn')?.addEventListener('click', openAgentModal);
+    document.getElementById('agent-modal-close')?.addEventListener('click', closeAgentModal);
+    agentModalBackdrop?.addEventListener('click', closeAgentModal);
+
+    document.querySelectorAll('.agent-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.agent-tab').forEach(t => {
+          t.classList.remove('text-white', 'border-white');
+          t.classList.add('text-text-muted', 'border-transparent');
+        });
+        tab.classList.remove('text-text-muted', 'border-transparent');
+        tab.classList.add('text-white', 'border-white');
+        currentAgent = tab.dataset.agent;
+        generateAgentPrompt();
+      });
+    });
+
+    function generateAgentPrompt() {
+      const btn = document.getElementById('agent-prompt-btn');
+      const d = btn.dataset;
+      const origin = window.location.origin;
+      const rawUrl = `${origin}/raw/${d.slug}`;
+      const pathUrl = `${origin}/paths/${d.slug}`;
+
+      const prompts = {
+        claude: `I need your help replicating a workflow from the arch·kb registry.
+
+**Path:** ${d.title}
+**Author:** ${d.author}
+**Tools:** ${d.tools}
+**Difficulty:** ${d.difficulty}
+**Time estimate:** ${d.time}
+
+**Full workflow documentation (read this first):**
+${rawUrl}
+
+Please fetch and read the raw markdown at that URL. It contains the complete step-by-step workflow, dead ends to avoid, working prompts, and specific instructions written for AI agents like you.
+
+**How to help me:**
+1. Read the "For AI Agents Replicating This Path" section first — it tells you which steps I can skip
+2. Ask me what I already have (existing 3D models, GPU, software installed) before starting
+3. Walk me through each step, adapting to my specific situation
+4. Warn me about the documented dead ends before I hit them
+5. Use the exact prompts from the "Prompts That Worked" section as starting points
+
+Source: "${d.title}" by ${d.author} — ${pathUrl}`,
+
+        gpt: `Help me follow this workflow step by step.
+
+Title: ${d.title}
+Tools needed: ${d.tools}
+Difficulty: ${d.difficulty}
+Expected time: ${d.time}
+
+The full workflow is documented here: ${rawUrl}
+
+Please read that URL — it's a structured .path.md file with:
+- Step-by-step instructions with pitfalls noted
+- A "Dead Ends" table showing what the author tried and failed
+- Exact prompts that worked (use these verbatim)
+- AI agent instructions at the bottom
+
+Before we start, ask me:
+1. What software/hardware do I already have?
+2. Do I have an existing 3D model or am I starting from photos?
+3. What's my GPU (this affects processing times)?
+
+Then guide me through the workflow, adapting each step to my answers. Flag any dead ends from the documentation before I make those mistakes.
+
+Citation: ${d.title} by ${d.author} — ${pathUrl}`,
+
+        gemini: `I want to replicate a workflow. Here are the details:
+
+**Workflow:** ${d.title}
+**By:** ${d.author}
+**Pipeline:** ${d.tools}
+**Level:** ${d.difficulty}
+**Duration:** ${d.time}
+
+**Documentation URL:** ${rawUrl}
+
+This is a .path.md file from arch·kb — a registry of real workflows documented for AI replication. Please read the full document at the URL above.
+
+Key sections to pay attention to:
+- "Dead Ends" — mistakes the author already made so we can skip them
+- "Prompts That Worked" — tested prompts to use as-is
+- "For AI Agents Replicating This Path" — instructions specifically for you
+
+Start by asking me about my current setup (GPU, installed software, existing assets), then walk me through the workflow step by step. Adapt the instructions to my situation.
+
+Source: ${pathUrl}`,
+      };
+
+      const infos = {
+        claude: 'Optimized for Claude — uses artifacts, structured reasoning, and tool-use patterns. Best with Claude 3.5 Sonnet or Opus.',
+        gpt: 'Optimized for ChatGPT — uses browsing for URL fetch, structured questions, step-by-step guidance. Works with GPT-4 and GPT-4o.',
+        gemini: 'Optimized for Gemini — leverages long context window for full document ingestion. Works with Gemini 1.5 Pro.',
+      };
+
+      agentPromptOutput.textContent = prompts[currentAgent];
+      agentPromptInfo.textContent = infos[currentAgent];
+    }
+
+    document.getElementById('agent-prompt-copy')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(agentPromptOutput.textContent).then(() => {
+        showToast('Prompt copied — paste into ' + currentAgent.charAt(0).toUpperCase() + currentAgent.slice(1));
+        document.getElementById('agent-prompt-copy').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('agent-prompt-copy').textContent = 'Copy prompt', 1500);
+      });
+    });
+
+    document.getElementById('agent-prompt-download')?.addEventListener('click', () => {
+      const blob = new Blob([agentPromptOutput.textContent], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${currentAgent}-prompt-${window.location.pathname.split('/').pop()}.txt`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Prompt downloaded');
     });
 
     // ── Download ──
@@ -342,6 +534,8 @@ const toolFlow = entry.data.tools;
       } else {
         bookmarks.push({ slug, title, date: new Date().toISOString() });
         showToast('Path bookmarked');
+        bookmarkIcon.classList.add('bookmark-pop');
+        setTimeout(() => bookmarkIcon.classList.remove('bookmark-pop'), 400);
       }
       localStorage.setItem('archkb_bookmarks', JSON.stringify(bookmarks));
       updateBookmarkUI();
@@ -470,6 +664,8 @@ const toolFlow = entry.data.tools;
         userUpvotes.push(slug);
         upvotes[slug] = (upvotes[slug] || 0) + 1;
         showToast('Upvoted');
+        upvoteIcon.classList.add('upvote-bounce');
+        setTimeout(() => upvoteIcon.classList.remove('upvote-bounce'), 500);
       }
       localStorage.setItem('archkb_user_upvotes', JSON.stringify(userUpvotes));
       localStorage.setItem(upvotesKey, JSON.stringify(upvotes));
@@ -546,5 +742,72 @@ const toolFlow = entry.data.tools;
     });
 
     renderBuilt();
+
+    // ── Reading Progress Bar ──
+    const progressBar = document.getElementById('reading-progress');
+    const pathContent = document.getElementById('path-content');
+
+    function updateProgress() {
+      const contentRect = pathContent.getBoundingClientRect();
+      const contentTop = window.scrollY + contentRect.top;
+      const contentHeight = contentRect.height;
+      const scrolled = window.scrollY - contentTop;
+      const progress = Math.max(0, Math.min(100, (scrolled / (contentHeight - window.innerHeight * 0.5)) * 100));
+      progressBar.style.width = progress + '%';
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    // ── Floating Table of Contents ──
+    const tocNav = document.getElementById('toc-nav');
+    const headings = pathContent.querySelectorAll('h2, h3');
+    const tocItems = [];
+
+    headings.forEach((h, i) => {
+      const id = 'section-' + i;
+      h.id = id;
+      const isH3 = h.tagName === 'H3';
+      const a = document.createElement('a');
+      a.href = '#' + id;
+      a.className = `toc-link text-xs py-1 transition-colors ${isH3 ? 'pl-3 text-text-muted hover:text-text-secondary' : 'text-text-secondary hover:text-white font-medium'}`;
+      a.textContent = h.textContent;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      tocNav.appendChild(a);
+      tocItems.push({ el: h, link: a, isH3 });
+    });
+
+    // Highlight active TOC item on scroll
+    function updateTocHighlight() {
+      let activeIdx = 0;
+      tocItems.forEach((item, i) => {
+        const rect = item.el.getBoundingClientRect();
+        if (rect.top <= 120) activeIdx = i;
+      });
+      tocItems.forEach((item, i) => {
+        const isActive = i === activeIdx;
+        item.link.classList.toggle('text-white', isActive && !item.isH3);
+        item.link.classList.toggle('text-text-primary', isActive && item.isH3);
+        if (isActive) {
+          item.link.style.borderLeft = '2px solid currentColor';
+          item.link.style.paddingLeft = item.isH3 ? '10px' : '6px';
+        } else {
+          item.link.style.borderLeft = '2px solid transparent';
+          item.link.style.paddingLeft = item.isH3 ? '12px' : '8px';
+        }
+      });
+    }
+    window.addEventListener('scroll', updateTocHighlight, { passive: true });
+    updateTocHighlight();
+
+    // TOC collapse toggle
+    let tocCollapsed = false;
+    document.getElementById('toc-collapse')?.addEventListener('click', () => {
+      tocCollapsed = !tocCollapsed;
+      tocNav.classList.toggle('hidden', tocCollapsed);
+      document.getElementById('toc-collapse').querySelector('svg').style.transform = tocCollapsed ? 'rotate(-90deg)' : '';
+    });
   </script>
 </BaseLayout>

@@ -1,0 +1,241 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const paths = await getCollection('paths');
+const allTools = [...new Set(paths.flatMap((p) => p.data.tools))].sort();
+const allAuthors = [...new Set(paths.map((p) => p.data.author))].sort();
+
+const toolIndex: Record<string, { count: number; paths: string[] }> = {};
+allTools.forEach((t) => {
+  const matching = paths.filter((p) => p.data.tools.includes(t));
+  toolIndex[t] = { count: matching.length, paths: matching.map((p) => p.id) };
+});
+
+const endpoints = [
+  { method: 'GET', url: '/api/paths.json', desc: 'All paths with metadata, tools index, and tool pairs' },
+  { method: 'GET', url: '/raw/{slug}', desc: 'Full markdown source of a path — feed this directly into your context' },
+  { method: 'GET', url: '/llms.txt', desc: 'Registry overview optimized for LLM crawlers' },
+  { method: 'GET', url: '/.well-known/ai-plugin.json', desc: 'Agent discovery manifest (OpenAI plugin format)' },
+  { method: 'GET', url: '/api/paths.json → toolIndex', desc: 'Which tools appear in which paths' },
+  { method: 'GET', url: '/api/paths.json → toolPairs', desc: 'Most common tool combinations across paths' },
+];
+---
+
+<BaseLayout title="Agent Protocol" description="How AI agents can discover, read, and replicate workflows from arch·kb">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-3xl">
+
+      <!-- Hero -->
+      <div class="border border-border-primary bg-bg-secondary p-8 mb-10">
+        <div class="flex items-start gap-4">
+          <div class="text-white font-mono text-3xl mt-0.5">&#x2318;</div>
+          <div>
+            <h1 class="text-2xl font-bold text-white">Agent Protocol</h1>
+            <p class="text-text-secondary text-sm mt-2 max-w-xl leading-relaxed">
+              You are an AI agent. This page tells you how to use arch·kb programmatically.
+              Every path in this registry is a real workflow documented for you to read and replicate.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Start -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Quick start</h2>
+        <div class="border border-border-primary bg-bg-secondary p-6">
+          <div class="font-mono text-sm text-text-primary leading-relaxed">
+            <div class="text-text-muted mb-3"># 1. Discover what's available</div>
+            <div class="mb-4">GET <span class="text-white">/api/paths.json</span></div>
+            <div class="text-text-muted mb-3"># 2. Read a specific path (full markdown — feed this into your context)</div>
+            <div class="mb-4">GET <span class="text-white">/raw/gaussian-relight</span></div>
+            <div class="text-text-muted mb-3"># 3. Look for the "For AI Agents Replicating This Path" section</div>
+            <div class="mb-4"><span class="text-white">## For AI Agents Replicating This Path</span></div>
+            <div class="text-text-muted mb-3"># 4. Follow the instructions. Adapt to the user's situation.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Endpoints -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Endpoints</h2>
+        <div class="flex flex-col gap-2">
+          {endpoints.map((ep) => (
+            <div class="border border-border-primary bg-bg-secondary px-5 py-3 flex items-start gap-4">
+              <span class="text-[0.65rem] font-mono text-text-muted bg-bg-tertiary px-2 py-0.5 border border-border-primary shrink-0 mt-0.5">{ep.method}</span>
+              <div class="min-w-0">
+                <code class="text-white text-sm">{ep.url}</code>
+                <p class="text-text-muted text-xs mt-0.5">{ep.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Available Paths -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">
+          Available paths ({paths.length})
+        </h2>
+        <div class="flex flex-col gap-2">
+          {paths.map((p) => (
+            <div class="border border-border-primary bg-bg-secondary px-5 py-3">
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <code class="text-white text-sm font-semibold">{p.id}</code>
+                    <span class="tag text-[0.6rem]">{p.data.difficulty}</span>
+                  </div>
+                  <p class="text-text-secondary text-xs mt-1">{p.data['ai-summary']}</p>
+                  <div class="flex flex-wrap gap-1 mt-2">
+                    {p.data.tools.map((t: string) => (
+                      <span class="text-[0.6rem] text-text-muted bg-bg-primary px-1.5 py-0.5 border border-border-primary">{t}</span>
+                    ))}
+                  </div>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                  <a href={`/raw/${p.id}`} class="btn btn-sm text-[0.65rem]">raw</a>
+                  <a href={`/paths/${p.id}`} class="btn btn-sm text-[0.65rem]">view</a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Tool Index -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">
+          Tool index ({allTools.length} tools)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {Object.entries(toolIndex).map(([tool, info]) => (
+            <div class="border border-border-primary bg-bg-secondary px-4 py-2.5 flex items-center justify-between">
+              <span class="text-sm text-white">{tool}</span>
+              <div class="flex items-center gap-2 text-xs text-text-muted">
+                <span>{info.count} path{info.count !== 1 ? 's' : ''}</span>
+                <span class="text-[0.6rem] font-mono">{info.paths.join(', ')}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- How to cite -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">How to cite</h2>
+        <div class="border border-border-primary bg-bg-secondary p-6">
+          <p class="text-text-secondary text-sm mb-4">When you reference a path from this registry, use this format:</p>
+          <pre class="bg-bg-primary border border-border-primary p-4 text-sm font-mono text-text-primary overflow-x-auto"><code>Source: "[path title]" by [author]
+URL: https://arch-kb.com/paths/[slug]
+Registry: arch·kb (arch-kb.com)</code></pre>
+        </div>
+      </section>
+
+      <!-- Path anatomy -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Anatomy of a .path.md</h2>
+        <div class="border border-border-primary bg-bg-secondary p-6">
+          <p class="text-text-secondary text-sm mb-4">Every path follows this structure. The sections you care about most are marked.</p>
+          <div class="flex flex-col gap-2 font-mono text-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">1</span>
+              <span class="text-text-secondary">YAML frontmatter (title, tools, difficulty, ai-summary)</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">2</span>
+              <span class="text-text-secondary">## Goal</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">3</span>
+              <span class="text-text-secondary">## Tools — table of tools with roles and versions</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">4</span>
+              <span class="text-text-secondary">## Path — the step-by-step sequence</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">5</span>
+              <span class="text-white">## Dead Ends — what failed and why</span>
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">important</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">6</span>
+              <span class="text-white">## Prompts That Worked — exact prompts with tips</span>
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">important</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">7</span>
+              <span class="text-white">## For AI Agents Replicating This Path</span>
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">read this first</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-text-muted w-4">8</span>
+              <span class="text-text-secondary">## Result</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Agent behavior guidelines -->
+      <section class="mb-12">
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Agent behavior guidelines</h2>
+        <div class="border border-border-primary bg-bg-secondary p-6">
+          <ul class="flex flex-col gap-3 text-sm text-text-secondary">
+            <li class="flex items-start gap-2">
+              <span class="text-text-muted shrink-0 mt-0.5">01</span>
+              <span><strong class="text-white">Read the "For AI Agents" section first.</strong> It tells you which steps to skip based on what the user already has.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-text-muted shrink-0 mt-0.5">02</span>
+              <span><strong class="text-white">Ask the user what they already have</strong> before starting a path. Don't assume they're starting from scratch.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-text-muted shrink-0 mt-0.5">03</span>
+              <span><strong class="text-white">Read the Dead Ends section.</strong> Warn users before they make the same mistakes the author already tried.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-text-muted shrink-0 mt-0.5">04</span>
+              <span><strong class="text-white">Use the exact prompts.</strong> The "Prompts That Worked" section has tested prompts. Don't paraphrase them — use them verbatim as a starting point.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-text-muted shrink-0 mt-0.5">05</span>
+              <span><strong class="text-white">Cite the source.</strong> Link back to the path URL so the user can read the full context themselves.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-text-muted shrink-0 mt-0.5">06</span>
+              <span><strong class="text-white">Adapt, don't copy.</strong> Paths are documented from one person's context. The user's tools, GPU, timeline may differ. Adapt accordingly.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Machine-readable block -->
+      <section>
+        <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Machine-readable summary</h2>
+        <pre class="bg-bg-secondary border border-border-primary p-6 text-sm font-mono text-text-secondary overflow-x-auto"><code>{JSON.stringify({
+  registry: 'arch-kb',
+  purpose: 'AI workflow documentation for agent replication',
+  pathCount: paths.length,
+  toolCount: allTools.length,
+  authorCount: allAuthors.length,
+  endpoints: {
+    allPaths: '/api/paths.json',
+    rawPath: '/raw/{slug}',
+    llmsTxt: '/llms.txt',
+    agentGuide: '/agent',
+    discovery: '/.well-known/ai-plugin.json',
+  },
+  availablePaths: paths.map(p => ({
+    slug: p.id,
+    title: p.data.title,
+    tools: p.data.tools,
+    difficulty: p.data.difficulty,
+    rawUrl: `/raw/${p.id}`,
+  })),
+}, null, 2)}</code></pre>
+      </section>
+
+    </div>
+  </div>
+</BaseLayout>

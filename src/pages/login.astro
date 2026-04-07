@@ -45,14 +45,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="text-xs text-text-secondary font-mono">sarahchen / demo123</div>
     </div>
 
-    <p class="text-text-muted text-sm mt-6 text-center">
-      No account? <a href="/register" class="text-white underline underline-offset-2">Sign up</a>
-    </p>
   </div>
 
   <script>
     import { auth, googleProvider } from '../lib/firebase';
     import { signInWithPopup } from 'firebase/auth';
+
+    // Redirect if already logged in
+    if (localStorage.getItem('archkb_user')) {
+      window.location.href = '/explore';
+    }
 
     // Google login
     document.getElementById('google-login')?.addEventListener('click', async () => {

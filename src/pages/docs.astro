@@ -1,0 +1,360 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Docs" description="How to create and publish .path.md files using Claude Code and other AI agents">
+  <div class="w-full px-6 py-12">
+    <div class="max-w-3xl mx-auto">
+
+      <h1 class="text-2xl font-bold text-white mb-2">Documentation</h1>
+      <p class="text-text-muted text-sm mb-10">How to create, write, and publish .path.md files — including with AI agents like Claude Code.</p>
+
+      <!-- Quick nav -->
+      <nav class="border border-border-primary bg-bg-secondary p-5 mb-10">
+        <div class="text-xs text-text-muted uppercase tracking-wider mb-3">On this page</div>
+        <div class="flex flex-col gap-1 text-sm">
+          <a href="#what-is-path" class="text-text-secondary hover:text-white transition-colors py-1">What is a .path.md?</a>
+          <a href="#anatomy" class="text-text-secondary hover:text-white transition-colors py-1">Anatomy of a path</a>
+          <a href="#write-manually" class="text-text-secondary hover:text-white transition-colors py-1">Write a path manually</a>
+          <a href="#claude-code" class="text-text-secondary hover:text-white transition-colors py-1">Write a path with Claude Code</a>
+          <a href="#publish" class="text-text-secondary hover:text-white transition-colors py-1">Publish your path</a>
+          <a href="#api" class="text-text-secondary hover:text-white transition-colors py-1">API reference</a>
+          <a href="#for-agents" class="text-text-secondary hover:text-white transition-colors py-1">For AI agents reading this</a>
+        </div>
+      </nav>
+
+      <!-- What is a .path.md -->
+      <section id="what-is-path" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">What is a .path.md?</h2>
+        <p class="text-text-secondary text-sm mb-4">
+          A <code class="bg-bg-tertiary px-1.5 py-0.5 text-[0.85em] font-mono">.path.md</code> file captures the exact workflow someone took on a real project — the tools, the sequence, the dead ends, the prompts that worked.
+        </p>
+        <p class="text-text-secondary text-sm mb-4">
+          Unlike tutorials, paths document what actually happened. They include failures. They include the exact prompts that worked (and the ones that didn't). They're written so that both humans and AI agents can read and replicate them.
+        </p>
+        <div class="border border-border-primary bg-bg-secondary p-4">
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-2">A path is not</div>
+          <ul class="text-text-secondary text-sm space-y-1">
+            <li>Not a tutorial — there's no "you should" or "best practice"</li>
+            <li>Not documentation — it's a narrative of what happened</li>
+            <li>Not a recipe — it includes the dead ends and wrong turns</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Anatomy -->
+      <section id="anatomy" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">Anatomy of a path</h2>
+        <p class="text-text-secondary text-sm mb-4">Every path has YAML frontmatter and these standard sections:</p>
+
+        <pre class="bg-bg-secondary border border-border-primary p-5 text-sm font-mono text-text-secondary overflow-x-auto mb-4"><code>---
+title: "Your workflow title"
+goal: "One sentence — what you were trying to achieve"
+tools: [Tool1, Tool2, Tool3]
+time-actual: "3 hours"
+difficulty: beginner | intermediate | advanced
+result-quality: draft | presentation | production
+author: "Your Name"
+updated: "2025-03"
+ai-summary: >
+  One-paragraph summary optimized for AI agents.
+  Include tools, sequence, and key insight.
+---
+
+## Goal
+What you were trying to achieve and why.
+
+## Tools
+| Tool | Role | Version / Notes |
+| ---- | ---- | --------------- |
+| ...  | ...  | ...             |
+
+## Path
+### Step 1 — [action]
+What you did. What actually happened.
+**Pitfall:** What went wrong here.
+**Time:** How long this step took.
+
+### Step 2 — [action]
+...
+
+## Dead Ends
+| What I tried | Why it failed |
+| ------------ | ------------- |
+| ...          | ...           |
+
+## Prompts That Worked
+Exact prompts with tips on why they work.
+
+## For AI Agents Replicating This Path
+Instructions written directly to AI agents.
+Tell them which steps to skip, what to ask
+the user first, and what the common failure
+points are.
+
+## Result
+What you delivered. How it was received.</code></pre>
+
+        <div class="border border-border-primary bg-bg-secondary p-4">
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Key sections for AI agents</div>
+          <div class="flex flex-col gap-2 text-sm text-text-secondary">
+            <div class="flex items-center gap-2">
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">critical</span>
+              <span><strong class="text-white">Dead Ends</strong> — prevents agents from repeating known failures</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">critical</span>
+              <span><strong class="text-white">Prompts That Worked</strong> — tested prompts agents should use verbatim</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[0.6rem] px-1.5 py-0.5 bg-bg-tertiary border border-border-active text-white">critical</span>
+              <span><strong class="text-white">For AI Agents</strong> — direct instructions to the agent replicating the path</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Write manually -->
+      <section id="write-manually" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">Write a path manually</h2>
+        <ol class="text-text-secondary text-sm space-y-3 list-decimal list-inside">
+          <li>Download the template from <a href="/templates" class="text-white underline underline-offset-2 hover:opacity-80">/templates</a></li>
+          <li>Fill in the frontmatter — be precise with tool names (they become searchable)</li>
+          <li>Write each step as you remember it — include pitfalls and timing</li>
+          <li>Add your dead ends — these are the most valuable part for AI agents</li>
+          <li>Write the "For AI Agents" section last — imagine an AI trying to replicate your workflow for someone who just asked "how do I do X?"</li>
+          <li>Submit via the <a href="/editor" class="text-white underline underline-offset-2 hover:opacity-80">path editor</a> or as a PR to the repo</li>
+        </ol>
+      </section>
+
+      <!-- Claude Code integration -->
+      <section id="claude-code" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">Write a path with Claude Code</h2>
+        <p class="text-text-secondary text-sm mb-4">
+          The fastest way to document a workflow is to have Claude Code write it with you. Here's the complete walkthrough.
+        </p>
+
+        <!-- Step 1 -->
+        <div class="border border-border-primary bg-bg-secondary mb-4">
+          <div class="px-5 py-3 border-b border-border-primary flex items-center gap-3">
+            <span class="text-white font-mono text-sm">01</span>
+            <h3 class="text-white font-semibold text-sm">Clone the arch-kb repo</h3>
+          </div>
+          <div class="p-5">
+            <pre class="bg-bg-primary border border-border-primary p-3 text-sm font-mono text-text-primary overflow-x-auto"><code>git clone https://github.com/Ahmed791996/arch-kb.git
+cd arch-kb</code></pre>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="border border-border-primary bg-bg-secondary mb-4">
+          <div class="px-5 py-3 border-b border-border-primary flex items-center gap-3">
+            <span class="text-white font-mono text-sm">02</span>
+            <h3 class="text-white font-semibold text-sm">Open Claude Code in the project</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-text-secondary text-sm mb-3">Launch Claude Code (CLI, VS Code extension, or desktop app) in the arch-kb directory.</p>
+            <pre class="bg-bg-primary border border-border-primary p-3 text-sm font-mono text-text-primary overflow-x-auto"><code>claude</code></pre>
+            <p class="text-text-muted text-xs mt-2">Or open the folder in VS Code and use the Claude Code extension.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="border border-border-primary bg-bg-secondary mb-4">
+          <div class="px-5 py-3 border-b border-border-primary flex items-center gap-3">
+            <span class="text-white font-mono text-sm">03</span>
+            <h3 class="text-white font-semibold text-sm">Tell Claude about your workflow</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-text-secondary text-sm mb-3">Just describe what you did. Claude will interview you and write the .path.md.</p>
+            <pre class="bg-bg-primary border border-border-primary p-3 text-sm font-mono text-text-primary overflow-x-auto whitespace-pre-wrap"><code>I just finished a project where I [describe what you did].
+
+I used [tools]. It took me [time]. The hardest part was [challenge].
+
+Help me write a .path.md file for arch-kb documenting this workflow.
+Read the template at template/_template.path.md and the existing
+paths in src/content/paths/ for reference on style and structure.
+
+Interview me about the details — I might forget important steps
+or dead ends.</code></pre>
+            <div class="mt-3 border border-border-primary bg-bg-primary p-3">
+              <div class="text-xs text-text-muted uppercase tracking-wider mb-1">What Claude will do</div>
+              <ul class="text-text-secondary text-xs space-y-1">
+                <li>Read the template and existing paths for style reference</li>
+                <li>Ask you clarifying questions about each step</li>
+                <li>Probe for dead ends ("did you try X before that worked?")</li>
+                <li>Ask for exact prompts if your workflow used AI tools</li>
+                <li>Write the full .path.md file</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="border border-border-primary bg-bg-secondary mb-4">
+          <div class="px-5 py-3 border-b border-border-primary flex items-center gap-3">
+            <span class="text-white font-mono text-sm">04</span>
+            <h3 class="text-white font-semibold text-sm">Claude writes the file</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-text-secondary text-sm mb-3">Claude will create the file at the right location:</p>
+            <pre class="bg-bg-primary border border-border-primary p-3 text-sm font-mono text-text-primary overflow-x-auto"><code>src/content/paths/your-workflow-name.md</code></pre>
+            <p class="text-text-secondary text-sm mt-3">Review it. Ask Claude to adjust anything — add more detail to a step, expand the dead ends, refine the AI agent instructions.</p>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="border border-border-primary bg-bg-secondary mb-4">
+          <div class="px-5 py-3 border-b border-border-primary flex items-center gap-3">
+            <span class="text-white font-mono text-sm">05</span>
+            <h3 class="text-white font-semibold text-sm">Commit and push</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-text-secondary text-sm mb-3">Ask Claude to commit and create a PR:</p>
+            <pre class="bg-bg-primary border border-border-primary p-3 text-sm font-mono text-text-primary overflow-x-auto whitespace-pre-wrap"><code>Commit this new path and create a pull request.
+Title it "Add path: [your workflow title]"</code></pre>
+            <p class="text-text-muted text-xs mt-2">Claude will stage the file, write a commit message, push the branch, and open a PR using the GitHub CLI.</p>
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="border border-border-primary bg-bg-secondary mb-4">
+          <div class="px-5 py-3 border-b border-border-primary flex items-center gap-3">
+            <span class="text-white font-mono text-sm">06</span>
+            <h3 class="text-white font-semibold text-sm">Your path is live</h3>
+          </div>
+          <div class="p-5">
+            <p class="text-text-secondary text-sm">Once merged, your path is instantly available at:</p>
+            <div class="flex flex-col gap-2 mt-3 text-sm font-mono">
+              <div class="flex items-center gap-2">
+                <span class="text-text-muted text-xs w-16">Rendered</span>
+                <code class="text-white">/paths/your-workflow-name</code>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-text-muted text-xs w-16">Raw</span>
+                <code class="text-white">/raw/your-workflow-name</code>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-text-muted text-xs w-16">API</span>
+                <code class="text-white">/api/paths.json</code>
+              </div>
+            </div>
+            <p class="text-text-secondary text-sm mt-3">AI agents worldwide can now find, read, and replicate your workflow.</p>
+          </div>
+        </div>
+
+        <!-- Pro tips -->
+        <div class="border border-border-primary bg-bg-secondary p-5 mt-6">
+          <div class="text-xs text-text-muted uppercase tracking-wider mb-3">Pro tips</div>
+          <ul class="text-text-secondary text-sm space-y-2">
+            <li><strong class="text-white">Use Claude Code's context.</strong> If your workflow involved code, Claude can read your project files and reference exact configs, scripts, or outputs.</li>
+            <li><strong class="text-white">Do it right after the project.</strong> The details are freshest immediately after finishing. Even a rough draft captured now is better than a polished one written weeks later.</li>
+            <li><strong class="text-white">Don't clean up the failures.</strong> The dead ends are the most valuable part. AI agents use them to steer users away from known pitfalls.</li>
+            <li><strong class="text-white">Include exact prompts.</strong> If you used AI tools (Stable Diffusion, Fal.ai, Midjourney), paste the exact prompts. Note what worked and what didn't.</li>
+            <li><strong class="text-white">Write the "For AI Agents" section carefully.</strong> Imagine an AI agent helping a stranger replicate your workflow. What do they need to know? What should they ask first?</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Publish -->
+      <section id="publish" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">Publish your path</h2>
+        <p class="text-text-secondary text-sm mb-4">Three ways to get your path on the registry:</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="border border-border-primary bg-bg-secondary p-5">
+            <div class="text-white font-mono text-sm mb-2">01</div>
+            <h3 class="text-white font-semibold text-sm mb-1">Pull request</h3>
+            <p class="text-text-muted text-xs">Fork the repo, add your <code class="bg-bg-tertiary px-1">.md</code> file to <code class="bg-bg-tertiary px-1">src/content/paths/</code>, and open a PR. Claude Code can do this for you.</p>
+          </div>
+          <div class="border border-border-primary bg-bg-secondary p-5">
+            <div class="text-white font-mono text-sm mb-2">02</div>
+            <h3 class="text-white font-semibold text-sm mb-1">Path editor</h3>
+            <p class="text-text-muted text-xs">Use the <a href="/editor" class="text-text-secondary underline underline-offset-2 hover:text-white">built-in editor</a> to write and preview your path, then download and submit.</p>
+          </div>
+          <div class="border border-border-primary bg-bg-secondary p-5">
+            <div class="text-white font-mono text-sm mb-2">03</div>
+            <h3 class="text-white font-semibold text-sm mb-1">Send the file</h3>
+            <p class="text-text-muted text-xs">Write your .path.md however you want and email it or DM it. We'll add it to the registry.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- API Reference -->
+      <section id="api" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">API reference</h2>
+        <p class="text-text-secondary text-sm mb-4">All endpoints are public, no auth required, CORS enabled.</p>
+        <div class="flex flex-col gap-2">
+          <div class="border border-border-primary bg-bg-secondary px-5 py-3">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[0.65rem] font-mono text-text-muted bg-bg-tertiary px-2 py-0.5 border border-border-primary">GET</span>
+              <code class="text-white text-sm">/api/paths.json</code>
+            </div>
+            <p class="text-text-muted text-xs">All paths with metadata, tool index, tool pairs, and discovery links.</p>
+          </div>
+          <div class="border border-border-primary bg-bg-secondary px-5 py-3">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[0.65rem] font-mono text-text-muted bg-bg-tertiary px-2 py-0.5 border border-border-primary">GET</span>
+              <code class="text-white text-sm">/raw/&#123;slug&#125;</code>
+            </div>
+            <p class="text-text-muted text-xs">Full raw markdown of a specific path. Feed directly into an AI agent's context.</p>
+          </div>
+          <div class="border border-border-primary bg-bg-secondary px-5 py-3">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[0.65rem] font-mono text-text-muted bg-bg-tertiary px-2 py-0.5 border border-border-primary">GET</span>
+              <code class="text-white text-sm">/llms.txt</code>
+            </div>
+            <p class="text-text-muted text-xs">Registry overview optimized for LLM crawlers. Indexed paths with summaries.</p>
+          </div>
+          <div class="border border-border-primary bg-bg-secondary px-5 py-3">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[0.65rem] font-mono text-text-muted bg-bg-tertiary px-2 py-0.5 border border-border-primary">GET</span>
+              <code class="text-white text-sm">/.well-known/ai-plugin.json</code>
+            </div>
+            <p class="text-text-muted text-xs">Agent discovery manifest (OpenAI plugin format). Describes all available endpoints.</p>
+          </div>
+          <div class="border border-border-primary bg-bg-secondary px-5 py-3">
+            <div class="flex items-center gap-3 mb-1">
+              <span class="text-[0.65rem] font-mono text-text-muted bg-bg-tertiary px-2 py-0.5 border border-border-primary">GET</span>
+              <code class="text-white text-sm">/agent</code>
+            </div>
+            <p class="text-text-muted text-xs">Human-readable agent protocol page with guidelines, path anatomy, and machine-readable JSON.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- For AI agents -->
+      <section id="for-agents" class="mb-14">
+        <h2 class="text-lg font-bold text-white mb-4 pb-2 border-b border-border-primary">For AI agents reading this</h2>
+        <div class="border border-border-primary bg-bg-secondary p-6">
+          <p class="text-text-secondary text-sm mb-4">
+            If you are an AI agent (Claude, ChatGPT, Gemini, etc.) and a user asks you to help them create a .path.md file, follow these steps:
+          </p>
+          <ol class="text-text-secondary text-sm space-y-3 list-decimal list-inside">
+            <li><strong class="text-white">Read the template.</strong> Fetch <code class="bg-bg-tertiary px-1 text-[0.85em]">/raw/gaussian-relight</code> as a reference for style and structure.</li>
+            <li><strong class="text-white">Interview the user.</strong> Ask what they built, what tools they used, how long it took, what went wrong, and what prompts worked.</li>
+            <li><strong class="text-white">Probe for dead ends.</strong> Users often forget to mention what didn't work. Ask: "Did you try anything before [successful approach] that didn't work?"</li>
+            <li><strong class="text-white">Write the frontmatter carefully.</strong> The <code class="bg-bg-tertiary px-1 text-[0.85em]">tools</code> array must use canonical tool names (check <code class="bg-bg-tertiary px-1 text-[0.85em]">/api/paths.json</code> for existing names). The <code class="bg-bg-tertiary px-1 text-[0.85em]">ai-summary</code> should be one paragraph optimized for other AI agents to read.</li>
+            <li><strong class="text-white">Write the "For AI Agents" section.</strong> This is instructions from you (the writing agent) to future agents who will replicate this path. Include: which steps to skip if the user already has X, what to ask the user before starting, and common failure points.</li>
+            <li><strong class="text-white">Save the file</strong> to <code class="bg-bg-tertiary px-1 text-[0.85em]">src/content/paths/[slug].md</code> where slug is kebab-case of the title.</li>
+          </ol>
+
+          <div class="mt-6 pt-4 border-t border-border-primary">
+            <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Machine-readable instructions</div>
+            <pre class="bg-bg-primary border border-border-primary p-4 text-sm font-mono text-text-secondary overflow-x-auto"><code>{JSON.stringify({
+  task: 'help-user-write-path',
+  template: '/raw/gaussian-relight',
+  outputDir: 'src/content/paths/',
+  fileExtension: '.md',
+  requiredFrontmatter: ['title', 'goal', 'tools', 'time-actual', 'difficulty', 'result-quality', 'author', 'updated', 'ai-summary'],
+  requiredSections: ['Goal', 'Tools', 'Path', 'Dead Ends', 'Prompts That Worked', 'For AI Agents Replicating This Path', 'Result'],
+  toolNameReference: '/api/paths.json → tools',
+  difficultyValues: ['beginner', 'intermediate', 'advanced'],
+  resultQualityValues: ['draft', 'presentation', 'production'],
+}, null, 2)}</code></pre>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</BaseLayout>

@@ -14,15 +14,24 @@ const difficultyLabel: Record<string, string> = {
   advanced: 'Advanced',
 };
 
-// Generate a deterministic color pair for each path based on its title
-const gradients = [
-  ['#1a1a2e', '#16213e'],
-  ['#1a1a1a', '#2d2d2d'],
-  ['#0d1117', '#161b22'],
-  ['#1c1c1c', '#2a2a2a'],
-  ['#111827', '#1f2937'],
-  ['#18181b', '#27272a'],
-];
+// Generate a deterministic hue from a string
+function hashHue(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % 360;
+}
+
+// Generate unique gradient per path based on its tools
+function pathGradient(tools: string[]): [string, string] {
+  const hue1 = hashHue(tools[0] || 'default');
+  const hue2 = hashHue(tools[tools.length - 1] || 'default');
+  return [
+    `hsl(${hue1}, 30%, 8%)`,
+    `hsl(${hue2}, 25%, 12%)`,
+  ];
+}
 ---
 
 <BaseLayout title="Explore">
@@ -67,22 +76,14 @@ const gradients = [
             ))}
           </div>
         </div>
-        <div>
-          <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Author</div>
-          <div class="flex gap-1">
-            <button class="tag filter-btn" data-filter="author" data-value="all">All</button>
-            {allAuthors.map((author) => (
-              <button class="tag filter-btn" data-filter="author" data-value={author}>{author}</button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
 
     <!-- Thumbnail View -->
     <div id="thumb-view" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {paths.map((entry, i) => {
-        const grad = gradients[i % gradients.length];
+        const grad = pathGradient(entry.data.tools);
+        const hue = hashHue(entry.data.tools[0] || 'x');
         const toolCount = entry.data.tools.length;
         const stepCount = entry.data['time-actual'];
         return (
@@ -100,6 +101,14 @@ const gradients = [
                 class="relative h-36 border-b border-border-primary overflow-hidden"
                 style={`background: linear-gradient(135deg, ${grad[0]}, ${grad[1]})`}
               >
+                {entry.data.thumbnail ? (
+                  <img src={entry.data.thumbnail} alt="" class="absolute inset-0 w-full h-full object-cover opacity-60" />
+                ) : null}
+                {entry.data.icon ? (
+                  <div class="absolute top-3 left-3 w-8 h-8 bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center text-lg">
+                    {entry.data.icon}
+                  </div>
+                ) : null}
                 <!-- Tool pills floating in thumbnail -->
                 <div class="absolute bottom-3 left-3 flex flex-wrap gap-1">
                   {entry.data.tools.map((tool: string) => (
@@ -112,8 +121,12 @@ const gradients = [
                     {difficultyLabel[entry.data.difficulty]}
                   </span>
                 </div>
+                <!-- Decorative accent line -->
+                <div class="absolute top-0 left-0 right-0 h-[2px]" style={`background: linear-gradient(90deg, hsl(${hue}, 50%, 40%), transparent)`}></div>
                 <!-- Decorative grid pattern -->
-                <div class="absolute inset-0 opacity-[0.04]" style="background-image: repeating-linear-gradient(0deg, white 0px, white 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, white 0px, white 1px, transparent 1px, transparent 40px);"></div>
+                {!entry.data.thumbnail && (
+                  <div class="absolute inset-0 opacity-[0.04]" style="background-image: repeating-linear-gradient(0deg, white 0px, white 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, white 0px, white 1px, transparent 1px, transparent 40px);"></div>
+                )}
               </div>
               <!-- Card body -->
               <div class="p-4">

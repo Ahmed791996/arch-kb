@@ -23,9 +23,9 @@ export const GET: APIRoute = async ({ site }) => {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>arch·kb — AI Path Registry for Architecture</title>
+    <title>arch·kb — The Path Registry</title>
     <link>${baseUrl}</link>
-    <description>Real AI workflows from practicing architects. Structured for humans and AI agents.</description>
+    <description>Real AI workflows from real projects. Structured for humans and AI agents.</description>
     <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${baseUrl}/rss.xml" rel="self" type="application/rss+xml" />

@@ -5,9 +5,10 @@ import { buildSearchIndex } from '../data/search-index';
 interface Props {
   title: string;
   description?: string;
+  adminOnly?: boolean;
 }
 
-const { title, description = 'AI Path Registry for Architecture' } = Astro.props;
+const { title, description = 'The path registry for AI workflows', adminOnly = false } = Astro.props;
 const searchIndex = await buildSearchIndex();
 ---
 
@@ -25,46 +26,60 @@ const searchIndex = await buildSearchIndex();
       if (localStorage.getItem('archkb_theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
     </script>
   </head>
-  <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col" data-search-index={JSON.stringify(searchIndex)}>
+  <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col" data-search-index={JSON.stringify(searchIndex)} data-admin-only={adminOnly ? 'true' : 'false'}>
     <nav class="border-b border-border-primary px-8 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-6">
           <a href="/" class="text-white font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
             arch·kb
           </a>
-          <div class="flex items-center gap-0.5">
-            <a href="/explore" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Explore</a>
-            <a href="/prompts" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Prompts</a>
-            <a href="/learn" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Learn</a>
-            <a href="/collections" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Collections</a>
-            <!-- More dropdown -->
-            <div class="relative" id="more-dropdown-wrapper">
-              <button id="more-dropdown-btn" class="px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">More</button>
-              <div id="more-dropdown" class="hidden absolute left-0 top-full mt-1 w-48 border border-border-secondary bg-bg-primary shadow-2xl z-50">
-                <a href="/leaderboard" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Leaderboard</a>
-                <a href="/feed" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Activity Feed</a>
-                <a href="/compare" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Compare Tools</a>
-                <a href="/editor" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Path Editor</a>
-                <a href="/templates" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Templates</a>
-                <a href="/analytics" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Analytics</a>
-                <a href="/contributors" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Contributors</a>
-                <a href="/this-week" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">This Week</a>
+          <!-- Hamburger (mobile only) -->
+          <button id="hamburger" class="hamburger items-center justify-center w-8 h-8 text-text-muted hover:text-white">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+          </button>
+          <!-- Public nav — everyone sees this -->
+          <div class="nav-links flex items-center gap-0.5" id="nav-links">
+            <a href="/explore" class="nav-link px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Explore</a>
+            <a href="/learn" class="nav-link px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Learn</a>
+            <a href="/graph" class="nav-link px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Graph</a>
+            <a href="/remix" class="nav-link px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Remix</a>
+            <a href="/compare" class="nav-link px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Compare</a>
+            <a href="/docs" class="nav-link px-3 py-1.5 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Docs</a>
+            <a href="/agent" class="nav-link px-3 py-1.5 text-sm text-text-muted hover:text-white hover:bg-bg-tertiary transition-all font-mono text-xs">&#x2318; Agent</a>
+            <!-- Admin-only nav items -->
+            <div id="admin-nav" class="hidden flex items-center gap-0.5">
+              <div class="w-px h-4 bg-border-primary mx-1"></div>
+              <div class="relative" id="admin-dropdown-wrapper">
+                <button id="admin-dropdown-btn" class="px-3 py-1.5 text-sm text-text-muted hover:text-white hover:bg-bg-tertiary transition-all flex items-center gap-1">
+                  Admin
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+                </button>
+                <div id="admin-dropdown" class="hidden absolute left-0 top-full mt-1 w-48 border border-border-secondary bg-bg-primary shadow-2xl z-50">
+                  <a href="/analytics" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Analytics</a>
+                  <a href="/editor" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Path Editor</a>
+                  <a href="/leaderboard" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Leaderboard</a>
+                  <a href="/feed" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Activity Feed</a>
+                  <a href="/templates" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Templates</a>
+                  <a href="/contributors" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">Contributors</a>
+                  <a href="/this-week" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">This Week</a>
+                  <a href="/api/paths.json" class="block px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-tertiary transition-all">API</a>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <!-- Search trigger -->
+          <!-- Search -->
           <button id="search-trigger" class="btn btn-ghost btn-sm gap-1.5" title="Search (Ctrl+K)">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
             <span class="text-text-muted text-xs hidden md:inline">Ctrl+K</span>
           </button>
-          <!-- Notifications -->
-          <button id="notif-btn" class="btn btn-ghost btn-sm relative" title="Notifications">
+          <!-- Notifications (logged-in only) -->
+          <button id="notif-btn" class="btn btn-ghost btn-sm relative hidden" title="Notifications">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6v3L2 11h12l-1.5-2V6c0-2.5-2-4.5-4.5-4.5z"/><path d="M6.5 13a1.5 1.5 0 003 0"/></svg>
             <span id="notif-badge" class="hidden absolute -top-1 -right-1 w-3.5 h-3.5 bg-white text-black text-[0.5rem] font-bold flex items-center justify-center">0</span>
           </button>
-          <!-- Theme toggle -->
+          <!-- Theme -->
           <button id="theme-toggle" class="btn btn-ghost btn-sm" title="Toggle theme">
             <svg id="icon-dark" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1a7 7 0 100 14 5.5 5.5 0 010-14z"/></svg>
             <svg id="icon-light" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="hidden"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
@@ -74,6 +89,9 @@ const searchIndex = await buildSearchIndex();
           <a href="/register" class="btn btn-sm btn-primary" id="register-btn">Sign up</a>
           <div id="user-menu" class="hidden flex items-center gap-3">
             <a href="#" id="user-profile-link" class="text-sm text-text-secondary hover:text-white transition-colors"></a>
+            <a href="/settings" class="btn btn-ghost btn-sm" title="Settings">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+            </a>
             <button id="logout-btn" class="btn btn-sm">Log out</button>
           </div>
         </div>
@@ -87,7 +105,7 @@ const searchIndex = await buildSearchIndex();
         <div class="border border-border-secondary bg-bg-primary shadow-2xl">
           <div class="flex items-center gap-3 px-4 py-3 border-b border-border-primary">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" class="text-text-muted shrink-0"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
-            <input id="search-input-global" type="text" class="flex-1 bg-transparent text-white outline-none text-sm" placeholder="Search paths, tools, prompts, contributors..." autofocus />
+            <input id="search-input-global" type="text" class="flex-1 bg-transparent text-white outline-none text-sm" placeholder="Search paths, tools, prompts..." autofocus />
             <kbd class="text-[0.6rem] text-text-muted border border-border-primary px-1.5 py-0.5">ESC</kbd>
           </div>
           <div id="search-results" class="max-h-80 overflow-y-auto">
@@ -108,24 +126,158 @@ const searchIndex = await buildSearchIndex();
       </div>
     </div>
 
+    <!-- Admin gate overlay (for admin-only pages) -->
+    <div id="admin-gate" class="hidden fixed inset-0 z-50 bg-bg-primary flex items-center justify-center">
+      <div class="text-center">
+        <h2 class="text-white font-bold text-xl mb-2">Admin access required</h2>
+        <p class="text-text-muted text-sm mb-4">This page is only available to administrators.</p>
+        <a href="/" class="btn btn-primary">Back to home</a>
+      </div>
+    </div>
+
     <main class="flex-1">
       <slot />
     </main>
 
     <footer class="border-t border-border-primary text-text-muted text-xs text-center py-6">
       <div class="flex items-center justify-center gap-4">
-        <span>arch·kb — AI Path Registry for Architecture</span>
+        <span>arch·kb — The Path Registry</span>
         <a href="/rss.xml" class="hover:text-white transition-colors">RSS</a>
-        <a href="/api/paths.json" class="hover:text-white transition-colors">API</a>
+        <span class="hidden md:inline">·</span>
+        <button id="shortcuts-hint" class="hidden md:inline hover:text-white transition-colors">
+          Press <kbd class="px-1 py-0.5 border border-border-primary text-[0.6rem]">?</kbd> for shortcuts
+        </button>
       </div>
     </footer>
 
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="fixed inset-0 z-50 hidden">
+      <div id="shortcuts-backdrop" class="absolute inset-0 bg-black/60"></div>
+      <div class="relative max-w-md mx-auto mt-[15vh]">
+        <div class="border border-border-secondary bg-bg-primary shadow-2xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-white font-bold text-lg">Keyboard shortcuts</h2>
+            <kbd class="text-[0.6rem] text-text-muted border border-border-primary px-1.5 py-0.5">ESC</kbd>
+          </div>
+          <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+            <div class="text-xs text-text-muted uppercase tracking-wider col-span-2 mt-2 mb-1">Navigation</div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">/</kbd>
+              <span class="text-text-secondary">Search</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g h</kbd>
+              <span class="text-text-secondary">Go home</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g e</kbd>
+              <span class="text-text-secondary">Go explore</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g l</kbd>
+              <span class="text-text-secondary">Go learn</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g g</kbd>
+              <span class="text-text-secondary">Go graph</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g a</kbd>
+              <span class="text-text-secondary">Go agent</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g r</kbd>
+              <span class="text-text-secondary">Go remix</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">g p</kbd>
+              <span class="text-text-secondary">Go prompts</span>
+            </div>
+
+            <div class="text-xs text-text-muted uppercase tracking-wider col-span-2 mt-4 mb-1">On path lists</div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">j</kbd>
+              <span class="text-text-secondary">Next path</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">k</kbd>
+              <span class="text-text-secondary">Previous path</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">Enter</kbd>
+              <span class="text-text-secondary">Open selected</span>
+            </div>
+
+            <div class="text-xs text-text-muted uppercase tracking-wider col-span-2 mt-4 mb-1">On path pages</div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">b</kbd>
+              <span class="text-text-secondary">Bookmark</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">u</kbd>
+              <span class="text-text-secondary">Upvote</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">r</kbd>
+              <span class="text-text-secondary">View raw</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 border border-border-primary text-[0.65rem] text-text-muted font-mono">t</kbd>
+              <span class="text-text-secondary">Toggle theme</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script is:inline>
-      // ── More dropdown ──
-      const moreBtn = document.getElementById('more-dropdown-btn');
-      const moreDrop = document.getElementById('more-dropdown');
-      moreBtn?.addEventListener('click', (e) => { e.stopPropagation(); moreDrop.classList.toggle('hidden'); });
-      document.addEventListener('click', () => moreDrop?.classList.add('hidden'));
+      // ── Mobile hamburger ──
+      const hamburger = document.getElementById('hamburger');
+      const navLinks = document.getElementById('nav-links');
+      hamburger?.addEventListener('click', () => {
+        navLinks.classList.toggle('open');
+      });
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (!hamburger?.contains(e.target) && !navLinks?.contains(e.target)) {
+          navLinks?.classList.remove('open');
+        }
+      });
+
+      // ── Active nav highlight ──
+      const currentPath = window.location.pathname;
+      document.querySelectorAll('.nav-link').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
+          link.classList.add('nav-active');
+        }
+      });
+
+      // ── Admin check ──
+      const ADMIN_USERS = ['ahmedyakout'];
+      function isAdmin() {
+        const user = localStorage.getItem('archkb_user');
+        if (!user) return false;
+        return ADMIN_USERS.includes(JSON.parse(user).username);
+      }
+
+      // Show admin nav if admin
+      if (isAdmin()) {
+        document.getElementById('admin-nav')?.classList.remove('hidden');
+        document.getElementById('admin-nav')?.classList.add('flex');
+      }
+
+      // Block admin-only pages for non-admins
+      if (document.body.dataset.adminOnly === 'true' && !isAdmin()) {
+        document.getElementById('admin-gate')?.classList.remove('hidden');
+        document.querySelector('main')?.classList.add('hidden');
+      }
+
+      // Admin dropdown
+      const adminBtn = document.getElementById('admin-dropdown-btn');
+      const adminDrop = document.getElementById('admin-dropdown');
+      adminBtn?.addEventListener('click', (e) => { e.stopPropagation(); adminDrop.classList.toggle('hidden'); });
+      document.addEventListener('click', () => adminDrop?.classList.add('hidden'));
 
       // ── Auth ──
       function checkAuth() {
@@ -134,12 +286,14 @@ const searchIndex = await buildSearchIndex();
         const registerBtn = document.getElementById('register-btn');
         const userMenu = document.getElementById('user-menu');
         const profileLink = document.getElementById('user-profile-link');
+        const notifBtn = document.getElementById('notif-btn');
         if (user) {
           const parsed = JSON.parse(user);
           loginBtn.classList.add('hidden');
           registerBtn.classList.add('hidden');
           userMenu.classList.remove('hidden');
           userMenu.classList.add('flex');
+          notifBtn?.classList.remove('hidden');
           profileLink.textContent = parsed.displayName;
           profileLink.href = '/user/' + parsed.username;
         }
@@ -156,8 +310,8 @@ const searchIndex = await buildSearchIndex();
       const iconLight = document.getElementById('icon-light');
       function updateThemeIcons() {
         const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-        iconDark.classList.toggle('hidden', isLight);
-        iconLight.classList.toggle('hidden', !isLight);
+        iconDark?.classList.toggle('hidden', isLight);
+        iconLight?.classList.toggle('hidden', !isLight);
       }
       themeToggle?.addEventListener('click', () => {
         const current = document.documentElement.getAttribute('data-theme');
@@ -184,7 +338,6 @@ const searchIndex = await buildSearchIndex();
         if (e.key === 'Escape') closeSearch();
       });
 
-      // Search index (injected from pages via data attributes)
       const searchIndex = JSON.parse(document.body.dataset.searchIndex || '[]');
       searchInput?.addEventListener('input', () => {
         const q = searchInput.value.toLowerCase().trim();
@@ -198,10 +351,7 @@ const searchIndex = await buildSearchIndex();
         searchResults.innerHTML = matches.map(m => `
           <a href="${m.url}" class="flex items-center gap-3 px-4 py-3 hover:bg-bg-tertiary transition-colors border-b border-border-primary">
             <span class="text-[0.6rem] uppercase tracking-wider text-text-muted w-12 shrink-0">${m.type}</span>
-            <div class="min-w-0">
-              <div class="text-sm text-white truncate">${m.title}</div>
-              <div class="text-xs text-text-muted truncate">${m.description}</div>
-            </div>
+            <div class="min-w-0"><div class="text-sm text-white truncate">${m.title}</div><div class="text-xs text-text-muted truncate">${m.description}</div></div>
           </a>
         `).join('');
       });
@@ -217,11 +367,8 @@ const searchIndex = await buildSearchIndex();
         const notifs = getNotifs();
         const unread = notifs.filter(n => !n.read).length;
         notifBadge.textContent = unread;
-        notifBadge.classList.toggle('hidden', unread === 0);
-        if (notifs.length === 0) {
-          notifList.innerHTML = '<div class="px-4 py-6 text-center text-text-muted text-sm">No notifications</div>';
-          return;
-        }
+        notifBadge?.classList.toggle('hidden', unread === 0);
+        if (notifs.length === 0) { notifList.innerHTML = '<div class="px-4 py-6 text-center text-text-muted text-sm">No notifications</div>'; return; }
         notifList.innerHTML = notifs.slice(0, 10).map(n => `
           <div class="px-4 py-3 border-b border-border-primary ${n.read ? '' : 'bg-bg-secondary'}">
             <div class="text-xs text-text-secondary">${n.text}</div>
@@ -229,23 +376,120 @@ const searchIndex = await buildSearchIndex();
           </div>
         `).join('');
       }
-
       notifBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         notifPanel.classList.toggle('hidden');
-        // Mark all as read
-        const notifs = getNotifs();
-        notifs.forEach(n => n.read = true);
+        const notifs = getNotifs(); notifs.forEach(n => n.read = true);
         localStorage.setItem('archkb_notifs', JSON.stringify(notifs));
         setTimeout(renderNotifs, 300);
       });
       document.addEventListener('click', () => notifPanel?.classList.add('hidden'));
       notifPanel?.addEventListener('click', e => e.stopPropagation());
-      document.getElementById('notif-clear')?.addEventListener('click', () => {
-        localStorage.setItem('archkb_notifs', '[]');
-        renderNotifs();
-      });
+      document.getElementById('notif-clear')?.addEventListener('click', () => { localStorage.setItem('archkb_notifs', '[]'); renderNotifs(); });
       renderNotifs();
+
+      // ── Keyboard Shortcuts ──
+      const shortcutsModal = document.getElementById('shortcuts-modal');
+      const shortcutsBackdrop = document.getElementById('shortcuts-backdrop');
+      let goPending = false;
+
+      function isInputFocused() {
+        const el = document.activeElement;
+        return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.contentEditable === 'true');
+      }
+
+      function openShortcuts() { shortcutsModal.classList.remove('hidden'); }
+      function closeShortcuts() { shortcutsModal.classList.add('hidden'); }
+
+      shortcutsBackdrop?.addEventListener('click', closeShortcuts);
+      document.getElementById('shortcuts-hint')?.addEventListener('click', openShortcuts);
+
+      // j/k navigation for path cards
+      let focusedCard = -1;
+      function getCards() {
+        return [...document.querySelectorAll('.path-card:not([style*="display: none"]), .path-card-list:not([style*="display: none"])')];
+      }
+      function focusCard(idx) {
+        const cards = getCards();
+        if (cards.length === 0) return;
+        // Remove old focus
+        cards.forEach(c => c.classList.remove('ring-1', 'ring-white/30'));
+        focusedCard = Math.max(0, Math.min(cards.length - 1, idx));
+        const card = cards[focusedCard];
+        card.classList.add('ring-1', 'ring-white/30');
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (isInputFocused()) return;
+
+        // ? — shortcuts help
+        if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          shortcutsModal.classList.contains('hidden') ? openShortcuts() : closeShortcuts();
+          return;
+        }
+
+        if (e.key === 'Escape') {
+          closeShortcuts();
+          closeSearch();
+          return;
+        }
+
+        // / — search
+        if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          openSearch();
+          return;
+        }
+
+        // t — toggle theme
+        if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
+          themeToggle?.click();
+          return;
+        }
+
+        // g + key combos (go to)
+        if (e.key === 'g' && !goPending) {
+          goPending = true;
+          setTimeout(() => { goPending = false; }, 800);
+          return;
+        }
+        if (goPending) {
+          goPending = false;
+          const goMap = { h: '/', e: '/explore', l: '/learn', g: '/graph', a: '/agent', r: '/remix', p: '/prompts', d: '/docs' };
+          if (goMap[e.key]) { window.location.href = goMap[e.key]; return; }
+        }
+
+        // j/k — navigate path cards
+        if (e.key === 'j') { focusCard(focusedCard + 1); return; }
+        if (e.key === 'k') { focusCard(focusedCard - 1); return; }
+        if (e.key === 'Enter' && focusedCard >= 0) {
+          const cards = getCards();
+          const link = cards[focusedCard]?.querySelector('a');
+          if (link) link.click();
+          return;
+        }
+
+        // b — bookmark (on path pages)
+        if (e.key === 'b') {
+          document.getElementById('bookmark-btn')?.click();
+          return;
+        }
+
+        // u — upvote (on path pages)
+        if (e.key === 'u') {
+          document.getElementById('upvote-btn')?.click();
+          return;
+        }
+
+        // r — view raw (on path pages)
+        if (e.key === 'r') {
+          const rawLink = document.querySelector('a[href^="/raw/"]');
+          if (rawLink) window.open(rawLink.href, '_blank');
+          return;
+        }
+      });
     </script>
   </body>
 </html>

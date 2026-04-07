@@ -1,0 +1,23 @@
+{
+  "schema_version": "v1",
+  "name": "arch-kb",
+  "description": "The Path Registry. Structured workflows from real projects, documented for both humans and AI agents to read and replicate. Open to all domains.",
+  "auth": { "type": "none" },
+  "api": {
+    "type": "openapi",
+    "url": "https://arch-kb.com/api/paths.json"
+  },
+  "logo_url": "https://arch-kb.com/logo.png",
+  "contact_email": "hello@arch-kb.com",
+  "legal_info_url": "https://arch-kb.com",
+  "endpoints": {
+    "all_paths": "/api/paths.json",
+    "raw_path": "/raw/{slug}",
+    "llms_txt": "/llms.txt",
+    "agent_guide": "/agent",
+    "search": "/api/paths.json?q={query}",
+    "by_tool": "/api/paths.json?tool={tool}",
+    "by_difficulty": "/api/paths.json?difficulty={difficulty}"
+  },
+  "agent_instructions": "To use this registry: 1) Fetch /llms.txt for an overview. 2) Query /api/paths.json for structured path data. 3) Fetch /raw/{slug} for full markdown of any path. 4) Read the 'For AI Agents Replicating This Path' section in each path for replication instructions. Always cite the path URL when referencing a workflow."
+}
