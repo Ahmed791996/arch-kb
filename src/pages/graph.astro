@@ -70,13 +70,20 @@ const graphData = {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div id="graph-container" class="grid grid-cols-1 lg:grid-cols-4 gap-4">
       <!-- Graph -->
-      <div class="lg:col-span-3 border border-border-primary bg-bg-secondary relative" style="height: 70vh;">
-        <svg id="graph-svg" class="w-full h-full"></svg>
-        <!-- Zoom hint -->
-        <div class="absolute bottom-3 left-3 text-[0.6rem] text-text-muted bg-bg-primary/80 px-2 py-1 border border-border-primary">
-          Scroll to zoom. Drag nodes to rearrange. Click to inspect.
+      <div id="graph-wrapper" class="lg:col-span-3 border border-border-primary bg-bg-secondary relative" style="height: 85vh;">
+        <!-- Grid background -->
+        <div class="absolute inset-0 opacity-[0.06]" style="background-image: repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 50px), repeating-linear-gradient(90deg, #fff 0px, #fff 1px, transparent 1px, transparent 50px);"></div>
+        <svg id="graph-svg" class="w-full h-full relative z-10"></svg>
+        <!-- Controls -->
+        <div class="absolute bottom-3 left-3 flex items-center gap-2 z-20">
+          <div class="text-[0.6rem] text-text-muted bg-bg-primary/80 px-2 py-1 border border-border-primary">
+            Scroll to zoom. Drag to rearrange. Click to inspect.
+          </div>
+          <button id="fullscreen-btn" class="text-[0.6rem] text-text-muted bg-bg-primary/80 px-2 py-1 border border-border-primary hover:text-white hover:border-border-active transition-all cursor-pointer">
+            Fullscreen
+          </button>
         </div>
       </div>
 
@@ -216,6 +223,29 @@ const graphData = {
       const ns = 'http://www.w3.org/2000/svg';
       svg.innerHTML = '';
 
+      // SVG glow filter
+      const defs = document.createElementNS(ns, 'defs');
+      const filter = document.createElementNS(ns, 'filter');
+      filter.setAttribute('id', 'glow');
+      filter.setAttribute('x', '-50%');
+      filter.setAttribute('y', '-50%');
+      filter.setAttribute('width', '200%');
+      filter.setAttribute('height', '200%');
+      const blur = document.createElementNS(ns, 'feGaussianBlur');
+      blur.setAttribute('stdDeviation', '4');
+      blur.setAttribute('result', 'coloredBlur');
+      const merge = document.createElementNS(ns, 'feMerge');
+      const mergeNode1 = document.createElementNS(ns, 'feMergeNode');
+      mergeNode1.setAttribute('in', 'coloredBlur');
+      const mergeNode2 = document.createElementNS(ns, 'feMergeNode');
+      mergeNode2.setAttribute('in', 'SourceGraphic');
+      merge.appendChild(mergeNode1);
+      merge.appendChild(mergeNode2);
+      filter.appendChild(blur);
+      filter.appendChild(merge);
+      defs.appendChild(filter);
+      svg.appendChild(defs);
+
       // Create transform group
       const g = document.createElementNS(ns, 'g');
       g.setAttribute('transform', `translate(${transform.x},${transform.y}) scale(${transform.k})`);
@@ -274,6 +304,15 @@ const graphData = {
         shape.style.cursor = 'pointer';
         shape.style.transition = 'all 0.15s ease';
         shape.dataset.tool = n.id;
+
+        // Hover glow
+        shape.addEventListener('mouseenter', () => {
+          shape.setAttribute('filter', 'url(#glow)');
+        });
+        shape.addEventListener('mouseleave', () => {
+          shape.removeAttribute('filter');
+        });
+
         const circle = shape;
 
         circle.addEventListener('mousedown', (ev) => {
@@ -432,6 +471,40 @@ const graphData = {
     document.getElementById('toggle-labels').addEventListener('click', function() {
       showLabels = !showLabels;
       this.textContent = showLabels ? 'Hide labels' : 'Show labels';
+    });
+
+    // Fullscreen toggle
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const graphWrapper = document.getElementById('graph-wrapper');
+    const graphContainer = document.getElementById('graph-container');
+    let isFullscreen = false;
+
+    fullscreenBtn?.addEventListener('click', () => {
+      isFullscreen = !isFullscreen;
+      if (isFullscreen) {
+        graphWrapper.style.position = 'fixed';
+        graphWrapper.style.inset = '0';
+        graphWrapper.style.height = '100vh';
+        graphWrapper.style.zIndex = '60';
+        graphContainer.style.display = 'block';
+        fullscreenBtn.textContent = 'Exit fullscreen';
+      } else {
+        graphWrapper.style.position = '';
+        graphWrapper.style.inset = '';
+        graphWrapper.style.height = '85vh';
+        graphWrapper.style.zIndex = '';
+        graphContainer.style.display = '';
+        fullscreenBtn.textContent = 'Fullscreen';
+      }
+      // Re-measure
+      const newRect = svg.getBoundingClientRect();
+      // Update simulation bounds (W and H are in closure but we can't easily change them)
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        fullscreenBtn.click();
+      }
     });
 
     // Animation loop

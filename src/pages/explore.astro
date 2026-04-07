@@ -67,15 +67,6 @@ function pathGradient(tools: string[]): [string, string] {
             ))}
           </div>
         </div>
-        <div>
-          <div class="text-xs text-text-muted uppercase tracking-wider mb-2">Tool</div>
-          <div class="flex flex-wrap gap-1">
-            <button class="tag filter-btn" data-filter="tool" data-value="all">All</button>
-            {allTools.map((tool) => (
-              <button class="tag filter-btn" data-filter="tool" data-value={tool}>{tool}</button>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
 

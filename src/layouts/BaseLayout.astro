@@ -87,8 +87,9 @@ const searchIndex = await buildSearchIndex();
           <!-- Auth -->
           <a href="/login" class="btn btn-sm" id="login-btn">Log in</a>
           <a href="/register" class="btn btn-sm btn-primary" id="register-btn">Sign up</a>
-          <div id="user-menu" class="hidden flex items-center gap-3">
-            <a href="#" id="user-profile-link" class="text-sm text-text-secondary hover:text-white transition-colors"></a>
+          <div id="user-menu" class="hidden flex items-center gap-2">
+            <span id="user-greeting" class="text-sm text-text-muted hidden md:inline">Welcome,</span>
+            <a href="#" id="user-profile-link" class="text-sm text-white font-medium hover:opacity-80 transition-opacity"></a>
             <a href="/settings" class="btn btn-ghost btn-sm" title="Settings">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
             </a>
@@ -294,7 +295,8 @@ const searchIndex = await buildSearchIndex();
           userMenu.classList.remove('hidden');
           userMenu.classList.add('flex');
           notifBtn?.classList.remove('hidden');
-          profileLink.textContent = parsed.displayName;
+          const firstName = parsed.displayName?.split(' ')[0] || parsed.username;
+          profileLink.textContent = firstName;
           profileLink.href = '/user/' + parsed.username;
         }
       }
