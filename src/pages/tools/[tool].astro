@@ -36,7 +36,7 @@ const toolDescriptions: Record<string, string> = {
   'SketchUp': '3D modeling for architecture. Quick massing and scene setup. Exports depth maps via plugins for AI render pipelines.',
 };
 
-const description = toolDescriptions[toolName] || `${toolName} is used in ${toolPaths.length} path${toolPaths.length !== 1 ? 's' : ''} in the arch·kb registry.`;
+const description = toolDescriptions[toolName] || `${toolName} is used in ${toolPaths.length} path${toolPaths.length !== 1 ? 's' : ''} in the pathkit registry.`;
 
 // Related tools (tools that appear in the same paths)
 const relatedToolCounts: Record<string, number> = {};
@@ -169,11 +169,11 @@ const gradients = [
     const listView = document.getElementById('list-view');
     const viewThumb = document.getElementById('view-thumb');
     const viewList = document.getElementById('view-list');
-    let current = localStorage.getItem('archkb_view') || 'thumb';
+    let current = localStorage.getItem('pathkit_view') || 'thumb';
 
     function setView(v) {
       current = v;
-      localStorage.setItem('archkb_view', v);
+      localStorage.setItem('pathkit_view', v);
       thumbView.classList.toggle('hidden', v !== 'thumb');
       listView.classList.toggle('hidden', v !== 'list');
       viewThumb.classList.toggle('bg-bg-tertiary', v === 'thumb');

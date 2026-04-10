@@ -22,7 +22,7 @@ const endpoints = [
 ];
 ---
 
-<BaseLayout title="Agent Protocol" description="How AI agents can discover, read, and replicate workflows from arch·kb">
+<BaseLayout title="Agent Protocol" description="How AI agents can discover, read, and replicate workflows from pathkit">
   <div class="w-full px-6 py-12">
     <div class="max-w-3xl">
 
@@ -33,7 +33,7 @@ const endpoints = [
           <div>
             <h1 class="text-2xl font-bold text-white">Agent Protocol</h1>
             <p class="text-text-secondary text-sm mt-2 max-w-xl leading-relaxed">
-              You are an AI agent. This page tells you how to use arch·kb programmatically.
+              You are an AI agent. This page tells you how to use pathkit programmatically.
               Every path in this registry is a real workflow documented for you to read and replicate.
             </p>
           </div>
@@ -127,8 +127,8 @@ const endpoints = [
         <div class="border border-border-primary bg-bg-secondary p-6">
           <p class="text-text-secondary text-sm mb-4">When you reference a path from this registry, use this format:</p>
           <pre class="bg-bg-primary border border-border-primary p-4 text-sm font-mono text-text-primary overflow-x-auto"><code>Source: "[path title]" by [author]
-URL: https://arch-kb.com/paths/[slug]
-Registry: arch·kb (arch-kb.com)</code></pre>
+URL: https://pathkit.dev/paths/[slug]
+Registry: pathkit (pathkit.dev)</code></pre>
         </div>
       </section>
 
@@ -214,7 +214,7 @@ Registry: arch·kb (arch-kb.com)</code></pre>
       <section>
         <h2 class="text-xs font-medium text-text-muted uppercase tracking-wider mb-4">Machine-readable summary</h2>
         <pre class="bg-bg-secondary border border-border-primary p-6 text-sm font-mono text-text-secondary overflow-x-auto"><code>{JSON.stringify({
-  registry: 'arch-kb',
+  registry: 'pathkit',
   purpose: 'AI workflow documentation for agent replication',
   pathCount: paths.length,
   toolCount: allTools.length,

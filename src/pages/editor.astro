@@ -179,13 +179,13 @@ ai-summary: >
     });
 
     // Auto-save to localStorage
-    const savedDraft = localStorage.getItem('archkb_editor_draft');
+    const savedDraft = localStorage.getItem('pathkit_editor_draft');
     if (savedDraft && savedDraft.length > 50) {
       editor.value = savedDraft;
       renderPreview();
     }
     editor.addEventListener('input', () => {
-      localStorage.setItem('archkb_editor_draft', editor.value);
+      localStorage.setItem('pathkit_editor_draft', editor.value);
     });
   </script>
 </BaseLayout>

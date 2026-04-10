@@ -1,15 +1,15 @@
 {
   "schema_version": "v1",
-  "name": "arch-kb",
+  "name": "pathkit",
   "description": "The Path Registry. Structured workflows from real projects, documented for both humans and AI agents to read and replicate. Open to all domains.",
   "auth": { "type": "none" },
   "api": {
     "type": "openapi",
-    "url": "https://arch-kb.com/api/paths.json"
+    "url": "https://pathkit.dev/api/paths.json"
   },
-  "logo_url": "https://arch-kb.com/logo.png",
-  "contact_email": "hello@arch-kb.com",
-  "legal_info_url": "https://arch-kb.com",
+  "logo_url": "https://pathkit.dev/logo.png",
+  "contact_email": "hello@pathkit.dev",
+  "legal_info_url": "https://pathkit.dev",
   "endpoints": {
     "all_paths": "/api/paths.json",
     "raw_path": "/raw/{slug}",

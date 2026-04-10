@@ -328,7 +328,7 @@ const toolFlow = entry.data.tools;
     });
 
     document.getElementById('copy-citation-btn')?.addEventListener('click', function() {
-      const citation = `Source: "${this.dataset.title}" by ${this.dataset.author}\nURL: ${window.location.origin}${this.dataset.url}\nRegistry: arch·kb (arch-kb.com)`;
+      const citation = `Source: "${this.dataset.title}" by ${this.dataset.author}\nURL: ${window.location.origin}${this.dataset.url}\nRegistry: pathkit (pathkit.com)`;
       copyToClipboard(citation, 'AI citation copied');
     });
 
@@ -374,7 +374,7 @@ const toolFlow = entry.data.tools;
       const pathUrl = `${origin}/paths/${d.slug}`;
 
       const prompts = {
-        claude: `I need your help replicating a workflow from the arch·kb registry.
+        claude: `I need your help replicating a workflow from the pathkit registry.
 
 **Path:** ${d.title}
 **Author:** ${d.author}
@@ -430,7 +430,7 @@ Citation: ${d.title} by ${d.author} — ${pathUrl}`,
 
 **Documentation URL:** ${rawUrl}
 
-This is a .path.md file from arch·kb — a registry of real workflows documented for AI replication. Please read the full document at the URL above.
+This is a .path.md file from pathkit — a registry of real workflows documented for AI replication. Please read the full document at the URL above.
 
 Key sections to pay attention to:
 - "Dead Ends" — mistakes the author already made so we can skip them
@@ -505,7 +505,7 @@ Source: ${pathUrl}`,
     const bookmarkText = document.getElementById('bookmark-text');
 
     function getBookmarks() {
-      return JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]');
+      return JSON.parse(localStorage.getItem('pathkit_bookmarks') || '[]');
     }
 
     function updateBookmarkUI() {
@@ -537,7 +537,7 @@ Source: ${pathUrl}`,
         bookmarkIcon.classList.add('bookmark-pop');
         setTimeout(() => bookmarkIcon.classList.remove('bookmark-pop'), 400);
       }
-      localStorage.setItem('archkb_bookmarks', JSON.stringify(bookmarks));
+      localStorage.setItem('pathkit_bookmarks', JSON.stringify(bookmarks));
       updateBookmarkUI();
     });
 
@@ -545,20 +545,20 @@ Source: ${pathUrl}`,
 
     // ── Fork ──
     document.getElementById('fork-btn')?.addEventListener('click', function() {
-      const user = localStorage.getItem('archkb_user');
+      const user = localStorage.getItem('pathkit_user');
       if (!user) {
         window.location.href = '/login';
         return;
       }
       const slug = this.dataset.slug;
       const title = this.dataset.title;
-      const forkPrompt = `I want to fork this arch·kb path:\n\nOriginal: "${title}"\nURL: ${window.location.href}\n\nMy variation:\n- What I changed: [describe your different approach]\n- Tools swapped: [old tool] → [new tool]\n- Why: [reason for the change]\n\nPlease help me write a .path.md file for my forked version, keeping the same structure but reflecting my changes. Reference the original path as "Forked from: ${title}"`;
+      const forkPrompt = `I want to fork this pathkit path:\n\nOriginal: "${title}"\nURL: ${window.location.href}\n\nMy variation:\n- What I changed: [describe your different approach]\n- Tools swapped: [old tool] → [new tool]\n- Why: [reason for the change]\n\nPlease help me write a .path.md file for my forked version, keeping the same structure but reflecting my changes. Reference the original path as "Forked from: ${title}"`;
       copyToClipboard(forkPrompt, 'Fork prompt copied — paste into Claude to write your version');
     });
 
     // ── Comments ──
     const slug = window.location.pathname.split('/').pop();
-    const commentsKey = 'archkb_comments_' + slug;
+    const commentsKey = 'pathkit_comments_' + slug;
 
     function getComments() {
       return JSON.parse(localStorage.getItem(commentsKey) || '[]');
@@ -605,7 +605,7 @@ Source: ${pathUrl}`,
     }
 
     // Show form if logged in
-    const user = localStorage.getItem('archkb_user');
+    const user = localStorage.getItem('pathkit_user');
     if (user) {
       document.getElementById('comment-login-prompt').classList.add('hidden');
       document.getElementById('comment-form').classList.remove('hidden');
@@ -616,7 +616,7 @@ Source: ${pathUrl}`,
       const text = input.value.trim();
       if (!text) return;
 
-      const userData = JSON.parse(localStorage.getItem('archkb_user'));
+      const userData = JSON.parse(localStorage.getItem('pathkit_user'));
       const comments = getComments();
       comments.push({
         author: userData.displayName,
@@ -635,7 +635,7 @@ Source: ${pathUrl}`,
     const upvoteBtn = document.getElementById('upvote-btn');
     const upvoteIcon = document.getElementById('upvote-icon');
     const upvoteCount = document.getElementById('upvote-count');
-    const upvotesKey = 'archkb_upvotes';
+    const upvotesKey = 'pathkit_upvotes';
 
     function getUpvotes() {
       return JSON.parse(localStorage.getItem(upvotesKey) || '{}');
@@ -644,7 +644,7 @@ Source: ${pathUrl}`,
     function updateUpvoteUI() {
       const upvotes = getUpvotes();
       const count = upvotes[slug] || 0;
-      const voted = (JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]')).includes(slug);
+      const voted = (JSON.parse(localStorage.getItem('pathkit_user_upvotes') || '[]')).includes(slug);
       upvoteCount.textContent = count;
       if (voted) {
         upvoteIcon.setAttribute('fill', 'currentColor');
@@ -653,7 +653,7 @@ Source: ${pathUrl}`,
     }
 
     upvoteBtn?.addEventListener('click', () => {
-      const userUpvotes = JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]');
+      const userUpvotes = JSON.parse(localStorage.getItem('pathkit_user_upvotes') || '[]');
       const upvotes = getUpvotes();
       const idx = userUpvotes.indexOf(slug);
       if (idx >= 0) {
@@ -667,7 +667,7 @@ Source: ${pathUrl}`,
         upvoteIcon.classList.add('upvote-bounce');
         setTimeout(() => upvoteIcon.classList.remove('upvote-bounce'), 500);
       }
-      localStorage.setItem('archkb_user_upvotes', JSON.stringify(userUpvotes));
+      localStorage.setItem('pathkit_user_upvotes', JSON.stringify(userUpvotes));
       localStorage.setItem(upvotesKey, JSON.stringify(upvotes));
       upvoteIcon.setAttribute('fill', userUpvotes.includes(slug) ? 'currentColor' : 'none');
       upvoteBtn.classList.toggle('text-white', userUpvotes.includes(slug));
@@ -677,7 +677,7 @@ Source: ${pathUrl}`,
     updateUpvoteUI();
 
     // ── I Built This ──
-    const builtKey = 'archkb_built_' + slug;
+    const builtKey = 'pathkit_built_' + slug;
 
     function getBuilt() {
       return JSON.parse(localStorage.getItem(builtKey) || '[]');
@@ -732,7 +732,7 @@ Source: ${pathUrl}`,
       const input = document.getElementById('built-input');
       const text = input.value.trim();
       if (!text) return;
-      const userData = JSON.parse(localStorage.getItem('archkb_user'));
+      const userData = JSON.parse(localStorage.getItem('pathkit_user'));
       const items = getBuilt();
       items.push({ author: userData.displayName, text, date: new Date().toISOString() });
       localStorage.setItem(builtKey, JSON.stringify(items));

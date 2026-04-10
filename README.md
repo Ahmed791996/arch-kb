@@ -1,4 +1,4 @@
-# arch·kb
+# pathkit
 
 AI Path Registry for Architecture.
 

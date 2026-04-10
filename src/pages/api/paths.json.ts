@@ -46,7 +46,7 @@ export const GET: APIRoute = async () => {
   }));
 
   return new Response(JSON.stringify({
-    registry: 'arch-kb',
+    registry: 'pathkit',
     version: '2.0',
     description: 'The Path Registry. Each path is a real workflow documented for AI agent replication.',
     totalPaths: data.length,

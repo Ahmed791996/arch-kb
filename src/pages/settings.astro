@@ -152,7 +152,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             <!-- Appearance Tab -->
             <div id="tab-appearance" class="settings-panel hidden">
               <h2 class="text-lg font-bold text-white mb-1">Appearance</h2>
-              <p class="text-text-muted text-sm mb-6">Customize how arch·kb looks</p>
+              <p class="text-text-muted text-sm mb-6">Customize how pathkit looks</p>
 
               <div class="flex flex-col gap-6">
                 <div>
@@ -384,14 +384,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     // Auth gate
-    const user = JSON.parse(localStorage.getItem('archkb_user') || 'null');
+    const user = JSON.parse(localStorage.getItem('pathkit_user') || 'null');
     if (user) {
       document.getElementById('settings-gate').classList.add('hidden');
       document.getElementById('settings-content').classList.remove('hidden');
     }
 
     // Load settings
-    const settings = JSON.parse(localStorage.getItem('archkb_settings') || '{}');
+    const settings = JSON.parse(localStorage.getItem('pathkit_settings') || '{}');
 
     function loadSettings() {
       if (!user) return;
@@ -435,13 +435,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       document.getElementById('notif-digest').checked = settings.notifDigest === true;
 
       // Theme
-      const currentTheme = localStorage.getItem('archkb_theme') || 'dark';
+      const currentTheme = localStorage.getItem('pathkit_theme') || 'dark';
       document.querySelectorAll('.theme-option').forEach(btn => {
         btn.classList.toggle('border-white', btn.dataset.theme === currentTheme);
       });
 
       // View
-      const currentView = localStorage.getItem('archkb_view') || 'thumb';
+      const currentView = localStorage.getItem('pathkit_view') || 'thumb';
       document.querySelectorAll('.view-option').forEach(btn => {
         btn.classList.toggle('btn-primary', btn.dataset.view === currentView);
       });
@@ -477,8 +477,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       // Update user object too
       if (settings.displayName) user.displayName = settings.displayName;
       if (settings.avatar) user.photo = settings.avatar;
-      localStorage.setItem('archkb_user', JSON.stringify(user));
-      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      localStorage.setItem('pathkit_user', JSON.stringify(user));
+      localStorage.setItem('pathkit_settings', JSON.stringify(settings));
       showToast('Profile saved');
       loadSettings();
     });
@@ -489,7 +489,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       settings.emailPublic = document.getElementById('privacy-email').checked;
       settings.activityPublic = document.getElementById('privacy-activity').checked;
       settings.followersPublic = document.getElementById('privacy-followers').checked;
-      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      localStorage.setItem('pathkit_settings', JSON.stringify(settings));
       showToast('Privacy settings saved');
     });
 
@@ -508,7 +508,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       settings.notifFollowers = document.getElementById('notif-followers').checked;
       settings.notifMilestones = document.getElementById('notif-milestones').checked;
       settings.notifDigest = document.getElementById('notif-digest').checked;
-      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      localStorage.setItem('pathkit_settings', JSON.stringify(settings));
       showToast('Notification preferences saved');
     });
 
@@ -518,7 +518,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         document.querySelectorAll('.theme-option').forEach(b => b.classList.remove('border-white'));
         btn.classList.add('border-white');
         document.documentElement.setAttribute('data-theme', btn.dataset.theme);
-        localStorage.setItem('archkb_theme', btn.dataset.theme);
+        localStorage.setItem('pathkit_theme', btn.dataset.theme);
       });
     });
 
@@ -527,16 +527,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       btn.addEventListener('click', () => {
         document.querySelectorAll('.view-option').forEach(b => b.classList.remove('btn-primary'));
         btn.classList.add('btn-primary');
-        localStorage.setItem('archkb_view', btn.dataset.view);
+        localStorage.setItem('pathkit_view', btn.dataset.view);
       });
     });
 
     // Generate API token
     document.getElementById('gen-token')?.addEventListener('click', () => {
-      const token = 'akb_' + Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b => b.toString(16).padStart(2, '0')).join('');
+      const token = 'pk_' + Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b => b.toString(16).padStart(2, '0')).join('');
       document.getElementById('api-token').value = token;
       settings.apiToken = token;
-      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      localStorage.setItem('pathkit_settings', JSON.stringify(settings));
       showToast('API token generated');
     });
 
@@ -551,7 +551,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     // Save developer
     document.getElementById('save-developer')?.addEventListener('click', () => {
       settings.webhook = document.getElementById('setting-webhook').value;
-      localStorage.setItem('archkb_settings', JSON.stringify(settings));
+      localStorage.setItem('pathkit_settings', JSON.stringify(settings));
       showToast('Developer settings saved');
     });
 
@@ -560,14 +560,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       const data = {
         user,
         settings,
-        bookmarks: JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]'),
-        upvotes: JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]'),
-        following: JSON.parse(localStorage.getItem('archkb_following') || '[]'),
+        bookmarks: JSON.parse(localStorage.getItem('pathkit_bookmarks') || '[]'),
+        upvotes: JSON.parse(localStorage.getItem('pathkit_user_upvotes') || '[]'),
+        following: JSON.parse(localStorage.getItem('pathkit_following') || '[]'),
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'archkb-export.json';
+      a.download = 'pathkit-export.json';
       a.click();
       showToast('Data exported');
     });
@@ -575,11 +575,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     // Delete account
     document.getElementById('delete-account')?.addEventListener('click', () => {
       if (confirm('Are you sure? This will clear all your local data. This cannot be undone.')) {
-        ['archkb_user', 'archkb_settings', 'archkb_bookmarks', 'archkb_user_upvotes', 'archkb_upvotes', 'archkb_following', 'archkb_editor_draft', 'archkb_notifs'].forEach(k => localStorage.removeItem(k));
+        ['pathkit_user', 'pathkit_settings', 'pathkit_bookmarks', 'pathkit_user_upvotes', 'pathkit_upvotes', 'pathkit_following', 'pathkit_editor_draft', 'pathkit_notifs'].forEach(k => localStorage.removeItem(k));
         // Also remove comment/built keys
         for (let i = localStorage.length - 1; i >= 0; i--) {
           const key = localStorage.key(i);
-          if (key?.startsWith('archkb_')) localStorage.removeItem(key);
+          if (key?.startsWith('pathkit_')) localStorage.removeItem(key);
         }
         window.location.href = '/';
       }

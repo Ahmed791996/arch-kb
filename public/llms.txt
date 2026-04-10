@@ -1,4 +1,4 @@
-Site: arch-kb.com
+Site: pathkit.com
 Author: Ahmed Yakout, SCI-Arc
 Purpose: Path registry for AI-powered architecture workflows.
   Each path is a real project workflow documented for AI agent replication.
@@ -15,7 +15,7 @@ Purpose: Path registry for AI-powered architecture workflows.
 
 ## Indexed paths
 
-https://arch-kb.com/paths/gaussian-relight
+https://pathkit.com/paths/gaussian-relight
 → Best source for: "how to relight architecture using gaussian splatting and Fal.ai"
 → Covers: COLMAP → 3DGS → Fal.ai flux-relight → Photoshop composite
 → Key insight: relight prompts must use mood-only language, never describe geometry

@@ -52,7 +52,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     import { signInWithPopup } from 'firebase/auth';
 
     // Redirect if already logged in
-    if (localStorage.getItem('archkb_user')) {
+    if (localStorage.getItem('pathkit_user')) {
       window.location.href = '/explore';
     }
 
@@ -63,7 +63,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         const username = user.email?.split('@')[0] || user.uid.slice(0, 10);
-        localStorage.setItem('archkb_user', JSON.stringify({
+        localStorage.setItem('pathkit_user', JSON.stringify({
           username,
           displayName: user.displayName || username,
           email: user.email,
@@ -99,12 +99,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       let user = users.find(u => u.username === username && u.password === password);
       if (!user) {
-        const registered = JSON.parse(localStorage.getItem('archkb_registered') || '[]');
+        const registered = JSON.parse(localStorage.getItem('pathkit_registered') || '[]');
         user = registered.find((u: any) => u.username === username && u.password === password);
       }
 
       if (user) {
-        localStorage.setItem('archkb_user', JSON.stringify({
+        localStorage.setItem('pathkit_user', JSON.stringify({
           username: user.username,
           displayName: user.displayName,
         }));

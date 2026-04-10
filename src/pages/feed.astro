@@ -60,8 +60,8 @@ const difficultyLabel: Record<string, string> = { beginner: 'Beginner', intermed
 
   <script is:inline>
     const localFeed = document.getElementById('local-feed');
-    const bookmarks = JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]');
-    const upvotes = JSON.parse(localStorage.getItem('archkb_user_upvotes') || '[]');
+    const bookmarks = JSON.parse(localStorage.getItem('pathkit_bookmarks') || '[]');
+    const upvotes = JSON.parse(localStorage.getItem('pathkit_user_upvotes') || '[]');
 
     const items = [
       ...bookmarks.map(b => ({ type: 'bookmark', text: `Bookmarked "${b.title}"`, date: b.date, url: '/paths/' + b.slug })),

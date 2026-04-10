@@ -16,14 +16,14 @@ const searchIndex = await buildSearchIndex();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title} — arch·kb</title>
+    <title>{title} — pathkit</title>
     <meta name="description" content={description} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="alternate" type="application/rss+xml" title="arch·kb RSS" href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title="pathkit RSS" href="/rss.xml" />
     <script is:inline>
-      if (localStorage.getItem('archkb_theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      if (localStorage.getItem('pathkit_theme') === 'light') document.documentElement.setAttribute('data-theme', 'light');
     </script>
   </head>
   <body class="bg-bg-primary text-text-primary min-h-screen flex flex-col" data-search-index={JSON.stringify(searchIndex)} data-admin-only={adminOnly ? 'true' : 'false'}>
@@ -31,7 +31,7 @@ const searchIndex = await buildSearchIndex();
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-6">
           <a href="/" class="text-white font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
-            arch·kb
+            pathkit
           </a>
           <!-- Hamburger (mobile only) -->
           <button id="hamburger" class="hamburger items-center justify-center w-8 h-8 text-text-muted hover:text-white">
@@ -142,7 +142,7 @@ const searchIndex = await buildSearchIndex();
 
     <footer class="border-t border-border-primary text-text-muted text-xs text-center py-6">
       <div class="flex items-center justify-center gap-4">
-        <span>arch·kb — The Path Registry</span>
+        <span>pathkit — The Path Registry</span>
         <a href="/rss.xml" class="hover:text-white transition-colors">RSS</a>
         <span class="hidden md:inline">·</span>
         <button id="shortcuts-hint" class="hidden md:inline hover:text-white transition-colors">
@@ -257,7 +257,7 @@ const searchIndex = await buildSearchIndex();
       // ── Admin check ──
       const ADMIN_USERS = ['ahmedyakout'];
       function isAdmin() {
-        const user = localStorage.getItem('archkb_user');
+        const user = localStorage.getItem('pathkit_user');
         if (!user) return false;
         return ADMIN_USERS.includes(JSON.parse(user).username);
       }
@@ -282,7 +282,7 @@ const searchIndex = await buildSearchIndex();
 
       // ── Auth ──
       function checkAuth() {
-        const user = localStorage.getItem('archkb_user');
+        const user = localStorage.getItem('pathkit_user');
         const loginBtn = document.getElementById('login-btn');
         const registerBtn = document.getElementById('register-btn');
         const userMenu = document.getElementById('user-menu');
@@ -301,7 +301,7 @@ const searchIndex = await buildSearchIndex();
         }
       }
       document.getElementById('logout-btn')?.addEventListener('click', () => {
-        localStorage.removeItem('archkb_user');
+        localStorage.removeItem('pathkit_user');
         window.location.href = '/';
       });
       checkAuth();
@@ -319,7 +319,7 @@ const searchIndex = await buildSearchIndex();
         const current = document.documentElement.getAttribute('data-theme');
         const next = current === 'light' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('archkb_theme', next);
+        localStorage.setItem('pathkit_theme', next);
         updateThemeIcons();
       });
       updateThemeIcons();
@@ -364,7 +364,7 @@ const searchIndex = await buildSearchIndex();
       const notifBadge = document.getElementById('notif-badge');
       const notifList = document.getElementById('notif-list');
 
-      function getNotifs() { return JSON.parse(localStorage.getItem('archkb_notifs') || '[]'); }
+      function getNotifs() { return JSON.parse(localStorage.getItem('pathkit_notifs') || '[]'); }
       function renderNotifs() {
         const notifs = getNotifs();
         const unread = notifs.filter(n => !n.read).length;
@@ -382,12 +382,12 @@ const searchIndex = await buildSearchIndex();
         e.stopPropagation();
         notifPanel.classList.toggle('hidden');
         const notifs = getNotifs(); notifs.forEach(n => n.read = true);
-        localStorage.setItem('archkb_notifs', JSON.stringify(notifs));
+        localStorage.setItem('pathkit_notifs', JSON.stringify(notifs));
         setTimeout(renderNotifs, 300);
       });
       document.addEventListener('click', () => notifPanel?.classList.add('hidden'));
       notifPanel?.addEventListener('click', e => e.stopPropagation());
-      document.getElementById('notif-clear')?.addEventListener('click', () => { localStorage.setItem('archkb_notifs', '[]'); renderNotifs(); });
+      document.getElementById('notif-clear')?.addEventListener('click', () => { localStorage.setItem('pathkit_notifs', '[]'); renderNotifs(); });
       renderNotifs();
 
       // ── Keyboard Shortcuts ──

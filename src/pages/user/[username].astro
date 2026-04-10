@@ -193,8 +193,8 @@ const gradients = [
     const listView = document.getElementById('list-view');
     const vt = document.getElementById('view-thumb');
     const vl = document.getElementById('view-list');
-    let cv = localStorage.getItem('archkb_view') || 'thumb';
-    function sv(v) { cv=v; localStorage.setItem('archkb_view',v); thumbView?.classList.toggle('hidden',v!=='thumb'); listView?.classList.toggle('hidden',v!=='list'); vt?.classList.toggle('bg-bg-tertiary',v==='thumb'); vl?.classList.toggle('bg-bg-tertiary',v==='list'); }
+    let cv = localStorage.getItem('pathkit_view') || 'thumb';
+    function sv(v) { cv=v; localStorage.setItem('pathkit_view',v); thumbView?.classList.toggle('hidden',v!=='thumb'); listView?.classList.toggle('hidden',v!=='list'); vt?.classList.toggle('bg-bg-tertiary',v==='thumb'); vl?.classList.toggle('bg-bg-tertiary',v==='list'); }
     vt?.addEventListener('click', ()=>sv('thumb'));
     vl?.addEventListener('click', ()=>sv('list'));
     sv(cv);
@@ -203,8 +203,8 @@ const gradients = [
     const followBtn = document.getElementById('follow-btn');
     const followText = document.getElementById('follow-text');
     const followerCount = document.getElementById('follower-count');
-    function getFollowing() { return JSON.parse(localStorage.getItem('archkb_following') || '[]'); }
-    function getFollowers(u) { return JSON.parse(localStorage.getItem('archkb_followers_' + u) || '0'); }
+    function getFollowing() { return JSON.parse(localStorage.getItem('pathkit_following') || '[]'); }
+    function getFollowers(u) { return JSON.parse(localStorage.getItem('pathkit_followers_' + u) || '0'); }
     function updateFollowUI() {
       const username = followBtn?.dataset.username;
       const following = getFollowing();
@@ -224,19 +224,19 @@ const gradients = [
         following.push(username);
         count++;
         // Add notification
-        const notifs = JSON.parse(localStorage.getItem('archkb_notifs') || '[]');
-        const user = JSON.parse(localStorage.getItem('archkb_user') || '{}');
+        const notifs = JSON.parse(localStorage.getItem('pathkit_notifs') || '[]');
+        const user = JSON.parse(localStorage.getItem('pathkit_user') || '{}');
         notifs.unshift({ text: `You followed ${followBtn.dataset.name}`, date: new Date().toISOString(), read: false });
-        localStorage.setItem('archkb_notifs', JSON.stringify(notifs));
+        localStorage.setItem('pathkit_notifs', JSON.stringify(notifs));
       }
-      localStorage.setItem('archkb_following', JSON.stringify(following));
-      localStorage.setItem('archkb_followers_' + username, count);
+      localStorage.setItem('pathkit_following', JSON.stringify(following));
+      localStorage.setItem('pathkit_followers_' + username, count);
       updateFollowUI();
     });
     updateFollowUI();
 
     // Bookmarks
-    const bookmarks = JSON.parse(localStorage.getItem('archkb_bookmarks') || '[]');
+    const bookmarks = JSON.parse(localStorage.getItem('pathkit_bookmarks') || '[]');
     document.getElementById('bookmark-count').textContent = bookmarks.length;
     const bl = document.getElementById('bookmarks-list');
     const nb = document.getElementById('no-bookmarks');

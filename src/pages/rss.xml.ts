@@ -6,7 +6,7 @@ export const prerender = true;
 export const GET: APIRoute = async ({ site }) => {
   const paths = await getCollection('paths');
   const sorted = [...paths].sort((a, b) => b.data.updated.localeCompare(a.data.updated));
-  const baseUrl = 'https://arch-kb-production.up.railway.app';
+  const baseUrl = 'https://pathkit-production.up.railway.app';
 
   const items = sorted.map((p) => `
     <item>
@@ -23,7 +23,7 @@ export const GET: APIRoute = async ({ site }) => {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>arch·kb — The Path Registry</title>
+    <title>pathkit — The Path Registry</title>
     <link>${baseUrl}</link>
     <description>Real AI workflows from real projects. Structured for humans and AI agents.</description>
     <language>en</language>

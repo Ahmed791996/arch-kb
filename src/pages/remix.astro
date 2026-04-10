@@ -288,7 +288,7 @@ const pathData = paths.map((p) => ({
     document.getElementById('copy-remix')?.addEventListener('click', () => {
       const prompt = `I want to build a workflow using these tools: ${selectedTools.join(', ')}
 
-I found these relevant paths on arch·kb:
+I found these relevant paths on pathkit:
 
 ${pathData.filter(p => p.tools.some(t => selectedTools.includes(t))).slice(0, 3).map(p =>
   `- "${p.title}" by ${p.author} (${window.location.origin}/raw/${p.id})`
@@ -309,7 +309,7 @@ tools: [${selectedTools.map(t => `"${t}"`).join(', ')}]
 time-actual: "TBD"
 difficulty: intermediate
 result-quality: draft
-author: "Remixed from arch·kb"
+author: "Remixed from pathkit"
 updated: "${new Date().toISOString().slice(0, 7)}"
 ai-summary: >
   Remixed workflow assembling steps from ${matches.length} existing paths.

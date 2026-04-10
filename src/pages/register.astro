@@ -61,7 +61,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         const username = user.email?.split('@')[0] || user.uid.slice(0, 10);
-        localStorage.setItem('archkb_user', JSON.stringify({
+        localStorage.setItem('pathkit_user', JSON.stringify({
           username,
           displayName: user.displayName || username,
           email: user.email,
@@ -93,12 +93,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (username.length < 3) { errorEl.textContent = 'Username must be at least 3 characters'; errorEl.classList.remove('hidden'); return; }
       if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters'; errorEl.classList.remove('hidden'); return; }
 
-      const registered = JSON.parse(localStorage.getItem('archkb_registered') || '[]');
+      const registered = JSON.parse(localStorage.getItem('pathkit_registered') || '[]');
       if (registered.find((u: any) => u.username === username)) { errorEl.textContent = 'Username already taken'; errorEl.classList.remove('hidden'); return; }
 
       registered.push({ username, displayName, password, affiliation });
-      localStorage.setItem('archkb_registered', JSON.stringify(registered));
-      localStorage.setItem('archkb_user', JSON.stringify({ username, displayName }));
+      localStorage.setItem('pathkit_registered', JSON.stringify(registered));
+      localStorage.setItem('pathkit_user', JSON.stringify({ username, displayName }));
       window.location.href = '/explore';
     });
   </script>

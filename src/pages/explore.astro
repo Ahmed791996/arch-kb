@@ -176,7 +176,7 @@ function pathGradient(tools: string[]): [string, string] {
 
   <script is:inline>
     let activeFilters = { difficulty: 'all', tool: 'all', author: 'all' };
-    let currentView = localStorage.getItem('archkb_view') || 'thumb';
+    let currentView = localStorage.getItem('pathkit_view') || 'thumb';
     const searchInput = document.getElementById('search-input');
     const thumbView = document.getElementById('thumb-view');
     const listView = document.getElementById('list-view');
@@ -192,7 +192,7 @@ function pathGradient(tools: string[]): [string, string] {
 
     function setView(view) {
       currentView = view;
-      localStorage.setItem('archkb_view', view);
+      localStorage.setItem('pathkit_view', view);
 
       if (view === 'thumb') {
         thumbView.classList.remove('hidden');

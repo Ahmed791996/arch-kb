@@ -85,7 +85,7 @@ const diffLabel: Record<string, string> = { beginner: 'Beginner', intermediate: 
 
   <script is:inline>
     // Populate upvote counts from localStorage
-    const upvotes = JSON.parse(localStorage.getItem('archkb_upvotes') || '{}');
+    const upvotes = JSON.parse(localStorage.getItem('pathkit_upvotes') || '{}');
     Object.entries(upvotes).forEach(([slug, count]) => {
       const el = document.getElementById('upvote-' + slug);
       if (el) el.textContent = count;
